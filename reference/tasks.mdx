@@ -1,0 +1,398 @@
+---
+title: Task Functions
+description: API reference for all Task helper functions
+---
+
+## Overview
+
+Task functions provide reusable automation patterns for common test operations. These functions are organized by domain (home, history) and utilize the `CreateTask` utility for automatic evidence capture.
+
+## Home Tasks
+
+Functions for interacting with home page elements.
+
+### ElementCount()
+
+Counts the number of visible elements matching a selector and containing specific text.
+
+#### Signature
+
+```javascript
+ElementCount(elementSelector, keyWord, alias)
+```
+
+#### Parameters
+
+<ParamField path="elementSelector" type="string" required>
+  CSS selector to identify the target elements
+  
+  **Examples:**
+  - IDs: `'#mi-boton'`
+  - Classes: `'.btn-primary'`
+  - Attributes: `'[data-testid="login"]'`
+  - Combinations: `'form > div input[name="user"]'`
+</ParamField>
+
+<ParamField path="keyWord" type="string" required>
+  Text content to filter elements by. Only elements containing this text will be counted.
+</ParamField>
+
+<ParamField path="alias" type="string" required>
+  Alias name to store the count result. Access later with `cy.get('@aliasName')`.
+</ParamField>
+
+#### Implementation
+
+```javascript
+export const ElementCount = (elementSelector, keyWord, alias) => {
+  cy.log(`Thinking: encontrar numero de elementos ${elementSelector} que tienen en su texto {${keyWord}} y sea visible...`)
+  cy.get(elementSelector) 
+    .filter(`:contains(${keyWord})`) 
+    .filter(':visible')            
+    .its('length')
+    .as(alias) 
+}
+```
+
+#### Usage
+
+```javascript
+import { ElementCount } from '@tasks/homeTask';
+
+// Count visible buttons with text "Submit"
+ElementCount('.btn', 'Submit', 'submitButtonCount');
+cy.get('@submitButtonCount').should('be.gt', 0);
+
+// Count news items containing "Update"
+ElementCount('[data-testid="news-item"]', 'Update', 'updateCount');
+cy.get('@updateCount').then(count => {
+  cy.log(`Found ${count} updates`);
+});
+```
+
+---
+
+### AliasForWebElement()
+
+Creates an alias for elements matching a selector and containing specific text (does not filter by visibility).
+
+#### Signature
+
+```javascript
+AliasForWebElement(elementSelector, keyWord, alias)
+```
+
+#### Parameters
+
+<ParamField path="elementSelector" type="string" required>
+  CSS selector to identify the target elements
+  
+  **Examples:**
+  - IDs: `'#mi-boton'`
+  - Classes: `'.btn-primary'`
+  - Attributes: `'[data-testid="login"]'`
+  - Combinations: `'form > div input[name="user"]'`
+</ParamField>
+
+<ParamField path="keyWord" type="string" required>
+  Text content to filter elements by
+</ParamField>
+
+<ParamField path="alias" type="string" required>
+  Alias name for the filtered elements
+</ParamField>
+
+#### Implementation
+
+```javascript
+export const AliasForWebElement = (elementSelector, keyWord, alias) => {
+  cy.log(`Thinking: encontrar numero de elementos ${elementSelector} que tienen en su texto {${keyWord}} y sea visible...`)
+  cy.get(elementSelector) 
+    .filter(`:contains(${keyWord})`) 
+    .as(alias) 
+}
+```
+
+#### Usage
+
+```javascript
+import { AliasForWebElement } from '@tasks/homeTask';
+
+AliasForWebElement('.menu-item', 'Settings', 'settingsItems');
+cy.get('@settingsItems').first().click();
+```
+
+---
+
+### showList()
+
+Displays a list of options by hovering over an element. This function uses `CreateTask` for automatic evidence capture.
+
+#### Signature
+
+```javascript
+showList(elementSelector, textElement)
+```
+
+#### Parameters
+
+<ParamField path="elementSelector" type="string" required>
+  CSS selector to identify the target element
+  
+  **Examples:**
+  - IDs: `'#mi-boton'`
+  - Classes: `'.btn-primary'`
+  - Attributes: `'[data-testid="login"]'`
+  - Combinations: `'form > div input[name="user"]'`
+</ParamField>
+
+<ParamField path="textElement" type="string" required>
+  Text content of the element to hover over
+</ParamField>
+
+#### Implementation
+
+```javascript
+export const showList = CreateTask('Desplegar lista de opciones', (elementSelector, textElement) => {
+  cy.log(`Thinking: dar click sobre boton {${textElement}}`)
+  cy.get(elementSelector).contains(textElement).realHover();
+});
+```
+
+#### Behavior
+
+- Uses `realHover()` for realistic mouse hover simulation
+- Automatically captures evidence screenshot with task name "Desplegar lista de opciones"
+- Logs the action in the Cypress command log
+
+#### Usage
+
+```javascript
+import { showList } from '@tasks/homeTask';
+
+// Show dropdown menu
+showList('.nav-item', 'Products');
+
+// Hover to reveal submenu
+showList('[data-testid="menu"]', 'Account');
+```
+
+---
+
+### click()
+
+Clicks on an element containing specific text.
+
+#### Signature
+
+```javascript
+click(elementSelector, textElement)
+```
+
+#### Parameters
+
+<ParamField path="elementSelector" type="string" required>
+  CSS selector to identify the target element
+  
+  **Examples:**
+  - IDs: `'#mi-boton'`
+  - Classes: `'.btn-primary'`
+  - Attributes: `'[data-testid="login"]'`
+  - Combinations: `'form > div input[name="user"]'`
+</ParamField>
+
+<ParamField path="textElement" type="string" required>
+  Text content of the element to click
+</ParamField>
+
+#### Implementation
+
+```javascript
+export const click = (elementSelector, textElement) => {
+  cy.log(`Thinking: dar click sobre boton {${textElement}}`)
+  cy.get(elementSelector).contains(textElement).click();
+}
+```
+
+#### Usage
+
+```javascript
+import { click } from '@tasks/homeTask';
+
+// Click a button
+click('button', 'Submit');
+
+// Click a link
+click('a.nav-link', 'Home');
+
+// Click with complex selector
+click('div[role="dialog"] button', 'Confirm');
+```
+
+---
+
+## History Tasks
+
+Functions for searching and navigating history elements.
+
+### SearchElement()
+
+Recursively searches for an element containing specific text, scrolling and clicking "VER MÁS" button as needed to load more content.
+
+#### Signature
+
+```javascript
+SearchElement(searchText, element, alias)
+```
+
+#### Parameters
+
+<ParamField path="searchText" type="string" required>
+  Text to search for within elements
+</ParamField>
+
+<ParamField path="element" type="string" required>
+  CSS selector for the "load more" button element
+  
+  **Examples:**
+  - IDs: `'#mi-boton'`
+  - Classes: `'.btn-primary'`
+  - Attributes: `'[data-testid="login"]'`
+  - Combinations: `'form > div input[name="user"]'`
+</ParamField>
+
+<ParamField path="alias" type="string" required>
+  Alias name to store the found element
+</ParamField>
+
+#### Implementation
+
+```javascript
+export const SearchElement = (searchText, element, alias) => {
+  const check = () => {
+    cy.get('body').then(($body) => {
+      if ($body.find(`:contains("${searchText}"):visible`).length > 0) {
+        _checkImage(searchText, alias);
+        return; 
+      }
+      const hayMasBotones = $body.find(element).length > 0;
+
+      if (hayMasBotones) {
+        _scrollClick()
+        check();    
+      } else {
+        throw new Error(`❌ Se acabó la lista y no apareció: "${searchText}"`);
+      }
+    });
+  };
+
+  check();
+};
+```
+
+#### Behavior
+
+- Searches for visible elements containing the search text
+- If not found, clicks "VER MÁS" button to load more content
+- Recursively continues searching until element is found or no more "VER MÁS" buttons exist
+- Scrolls found element into view and centers it
+- Captures evidence screenshots automatically
+- Throws error if element is not found after all content is loaded
+
+#### Usage
+
+```javascript
+import { SearchElement } from '@tasks/historyTask';
+
+// Search for a specific story
+SearchElement('Ashe: Comandante #4', 'button', 'asheStory');
+cy.get('@asheStory').should('be.visible');
+
+// Search in a paginated list
+SearchElement('Version 16.6', '.load-more-btn', 'specificVersion');
+cy.get('@specificVersion').click();
+```
+
+---
+
+### falseClick()
+
+Navigates to a link's URL without actually clicking the element. Extracts the `href` attribute and uses `cy.visit()` instead.
+
+#### Signature
+
+```javascript
+falseClick($enlace)
+```
+
+#### Parameters
+
+<ParamField path="$enlace" type="jQuery element" required>
+  jQuery element representing a link (anchor tag) with an `href` attribute
+</ParamField>
+
+#### Implementation
+
+```javascript
+export const falseClick = ($enlace) => {
+  const urlDestino = $enlace.attr('href');
+  cy.log(`Thinking: Navegando manualmente a -> ${urlDestino}`);
+  cy.visit(urlDestino);
+}
+```
+
+#### Behavior
+
+- Extracts the `href` attribute from the element
+- Logs the destination URL
+- Navigates to the URL using `cy.visit()` instead of clicking
+- Useful for avoiding issues with popup blockers or link behavior
+
+#### Usage
+
+```javascript
+import { falseClick } from '@tasks/historyTask';
+
+// Get element and navigate to its href
+cy.get('a.story-link').then($link => {
+  falseClick($link);
+});
+
+// Navigate without triggering click events
+cy.contains('a', 'Read More').then($el => {
+  falseClick($el);
+});
+```
+
+---
+
+## Helper Functions
+
+These are internal helper functions used by the task functions.
+
+### _checkImage()
+
+Internal function wrapped with `CreateTask` that scrolls the found element into view and creates an alias.
+
+```javascript
+const _checkImage = CreateTask('se encontre elemento con el texto', (searchText, alias) => {
+  cy.log('✅ ENCONTRADO!');
+  cy.contains(searchText)
+    .scrollIntoView({ block: 'center', inline: 'center' })
+    .should('be.visible')
+    .as(alias);
+});
+```
+
+### _scrollClick()
+
+Internal function wrapped with `CreateTask` that finds and clicks the "VER MÁS" button.
+
+```javascript
+const _scrollClick = CreateTask('scroll and click', () => {
+  cy.log('🔄 Cargando más historias...');
+  cy.contains('button', 'VER MÁS')
+    .scrollIntoView({ block: 'center', inline: 'center' })
+    .click({ scrollBehavior: 'center' });
+});
+```

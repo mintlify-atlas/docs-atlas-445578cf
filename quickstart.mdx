@@ -1,80 +1,305 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get started quickly by running your first Cypress test and understanding the project structure
 ---
 
-## Get started in three steps
+# Quickstart Guide
 
-Get your documentation site running locally and make your first customization.
+This guide will help you run your first test and understand the basics of working with this Cypress E2E automation framework.
 
-### Step 1: Set up your local environment
+## Run Your First Test
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+<Steps>
+  <Step title="Open Cypress Test Runner">
+    Launch the Cypress interactive test runner:
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+    ```bash
+    npx cypress open
+    ```
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+    This opens the Cypress launchpad where you can select E2E testing and choose your browser.
+  </Step>
+  
+  <Step title="Select E2E Testing">
+    In the Cypress interface, click on **"E2E Testing"** to configure and run end-to-end tests.
+  </Step>
+  
+  <Step title="Choose a Browser">
+    Select your preferred browser (Chrome, Edge, Firefox, or Electron) from the available options.
+  </Step>
+  
+  <Step title="Run a Test">
+    You'll see all test files from the `cypress/e2e/` directory. Click on any test file to run it:
     
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    - `checkElementHome.cy.js` - Tests for home page elements
+    - `historyPage.cy.js` - Tests for history page navigation
+    
+    The test will execute in the selected browser, and you'll see real-time results.
+  </Step>
+</Steps>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+## Run Tests in Headless Mode
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+For CI/CD or faster execution, run tests in headless mode using the command line:
 
-### Step 3: Go live
+```bash
+npm test
+```
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+This executes the script defined in `package.json`:
 
-## Next steps
+```json
+"scripts": {
+  "test": "npx cypress run --browser chrome --headless"
+}
+```
 
-Now that you have your docs running, explore these key features:
+<Info>
+Headless mode runs tests without opening a browser window, making it ideal for automated pipelines.
+</Info>
 
-<CardGroup cols={2}>
+## Understanding the Configuration
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
+The project is pre-configured in `cypress.config.js` with these settings:
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
+### Base URL
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
+The default base URL is set to League of Legends:
 
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
+```javascript
+baseUrl: 'https://www.leagueoflegends.com/'
+```
 
-</CardGroup>
+<Tip>
+**Customize for your project**: Update the `baseUrl` in `cypress.config.js` to point to your application.
+</Tip>
+
+### Key Configuration Options
+
+```javascript
+module.exports = defineConfig({
+  reporter: 'cypress-mochawesome-reporter',
+  reporterOptions: {
+    reportDir: 'evidencia/reporte',
+    charts: true,
+    embeddedScreenshots: true,
+    inlineAssets: true
+  },
+  retries: {
+    runMode: 2,      // Retry failed tests 2 times in headless mode
+    openMode: 0      // No retries in interactive mode
+  },
+  e2e: {
+    baseUrl: 'https://www.leagueoflegends.com/',
+    viewportWidth: 1920,
+    viewportHeight: 1080,
+    defaultCommandTimeout: 18000,
+    screenshotsFolder: 'evidencia/screenshots',
+    chromeWebSecurity: false
+  }
+});
+```
+
+## Write Your First Test
+
+Here's an example test from the project demonstrating the Screenplay Pattern:
+
+```javascript
+import * as HomeUI from '@ui/homeTarget'
+import * as Quest from '@questions/elementQuest'
+import * as Tasks from '@tasks/homeTask'
+
+const NEWS = 'Noticias';
+
+describe('Mi primera prueba en Cypress', () => {
+  beforeEach(() => {
+    cy.visit('es-es');
+  });
+
+  it('buscar elementos en pag lol', () => {
+    // Questions - Verify element exists and is visible
+    Quest.ElementExit(HomeUI.JUGAR_GRATIS);
+    Quest.ElementVisible(HomeUI.JUGAR_GRATIS);
+    
+    // Questions - Verify image type
+    Quest.CheckImageType(HomeUI.IMAGE_POPPY, 'jpg');
+    
+    // Questions - Verify text content
+    Quest.VisibleText(HomeUI.ASSASIN_AKALY, 'La Asesina Sigilosa');
+    
+    // Tasks - Count elements and create aliases
+    Tasks.ElementCount(HomeUI.DIVS_ELEMENT, 'Jugar gratis', 'gratisElement');
+    Tasks.ElementCount(HomeUI.DIVS_ELEMENT, 'Jugar ahora', 'ahoraElement');
+    
+    // Questions - Verify element counts
+    Quest.CheckElementNumber('ahoraElement', 3);
+    Quest.CheckElementNumber('gratisElement', 2);
+  });
+});
+```
+
+## Using Custom Commands
+
+The framework includes custom Cypress commands for enhanced functionality:
+
+### Center Element and Take Evidence
+
+```javascript
+it('ejemplo con comandos personalizados', () => {
+  cy.get('[data-testid="card-category"]')
+    .contains('Actualizaciones del juego')
+    .centerElement()                    // Scrolls element to center
+    .evidence('Screenshot centrado');   // Takes labeled screenshot
+});
+```
+
+### Using Environment Variables
+
+Access environment variables in your tests:
+
+```javascript
+const secretValue = Cypress.env('SECRET_VALUE');
+const variableRepo = Cypress.env('VARIABLE_REPO');
+
+it('test with environment variables', () => {
+  cy.log(`valor secreto: ${secretValue}`);
+  cy.log(`variable repo: ${variableRepo}`);
+});
+```
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+Environment variables can be set in `cypress.config.js`, `cypress.env.json`, or passed via command line.
 </Note>
+
+## Understanding the Screenplay Pattern
+
+This project uses the Screenplay Pattern to organize test code:
+
+<Steps>
+  <Step title="UI Layer (@ui)">
+    **Purpose**: Store all element selectors
+    
+    **Location**: `cypress/support/ui/`
+    
+    **Example** (`homeTarget.js`):
+    ```javascript
+    export const JUGAR_GRATIS = '[data-testid="play-free-button"]';
+    export const IMAGE_POPPY = '.champion-image[alt="Poppy"]';
+    ```
+  </Step>
+  
+  <Step title="Tasks Layer (@tasks)">
+    **Purpose**: Define user actions and business logic
+    
+    **Location**: `cypress/support/tasks/`
+    
+    **Example** (`homeTask.js`):
+    ```javascript
+    export const ElementCount = (elementSelector, keyWord, alias) => {
+      cy.log(`Finding elements ${elementSelector} containing ${keyWord}`);
+      cy.get(elementSelector)
+        .filter(`:contains(${keyWord})`)
+        .filter(':visible')
+        .its('length')
+        .as(alias);
+    }
+    ```
+  </Step>
+  
+  <Step title="Questions Layer (@questions)">
+    **Purpose**: Handle assertions and validations
+    
+    **Location**: `cypress/support/questions/`
+    
+    **Example** (`elementQuest.js`):
+    ```javascript
+    export const ElementVisible = (selector) => {
+      cy.get(selector).should('be.visible');
+    }
+    ```
+  </Step>
+</Steps>
+
+## View Test Reports
+
+After running tests in headless mode, view the HTML report:
+
+```bash
+open evidencia/reporte/index.html
+```
+
+The report includes:
+
+- Test execution summary with charts
+- Pass/fail statistics
+- Embedded screenshots
+- Execution timeline
+- Detailed test logs
+
+<Tip>
+All test evidence is centralized in the `evidencia/` folder:
+- Reports: `evidencia/reporte/index.html`
+- Screenshots: `evidencia/screenshots/`
+</Tip>
+
+## Run Specific Tests
+
+You can run specific test files using the `--spec` flag:
+
+```bash
+npx cypress run --spec "cypress/e2e/checkElementHome.cy.js"
+```
+
+Or run tests matching a pattern:
+
+```bash
+npx cypress run --spec "cypress/e2e/**/*home*.cy.js"
+```
+
+## Next Steps
+
+Now that you've run your first test, you can:
+
+1. **Customize the base URL** in `cypress.config.js` to test your own application
+2. **Create new page objects** in `cypress/support/ui/`
+3. **Write new tasks** in `cypress/support/tasks/`
+4. **Add assertions** in `cypress/support/questions/`
+5. **Write new test files** in `cypress/e2e/`
+
+<Warning>
+When creating new tests, follow the Screenplay Pattern structure to maintain code organization and reusability.
+</Warning>
+
+## Troubleshooting
+
+### Tests failing due to timeouts
+
+Increase the `defaultCommandTimeout` in `cypress.config.js`:
+
+```javascript
+defaultCommandTimeout: 18000  // 18 seconds
+```
+
+### Cannot find module with @ alias
+
+Ensure webpack preprocessing is configured correctly in `cypress.config.js`:
+
+```javascript
+const webpackPreprocessor = require('@cypress/webpack-preprocessor');
+
+setupNodeEvents(on, config) {
+  const options = {
+    webpackOptions: require('./webpack.config.js')
+  };
+  on('file:preprocessor', webpackPreprocessor(options));
+}
+```
+
+### Browser not launching
+
+Clear Cypress cache and reinstall:
+
+```bash
+npx cypress cache clear
+npm install cypress --force
+```

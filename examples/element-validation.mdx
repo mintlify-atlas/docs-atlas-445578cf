@@ -1,0 +1,325 @@
+---
+title: 'Element Validation'
+description: 'Learn how to validate element existence, visibility, text content, and attributes in Cypress tests'
+---
+
+## Overview
+
+The element validation functions provide a comprehensive set of methods to verify DOM elements in your Cypress tests. These functions are located in `cypress/support/questions/elementQuest.js` and use the `CreateTask` utility to automatically capture evidence screenshots.
+
+## Element Existence
+
+### ElementExit
+
+Verify that an element exists in the DOM, regardless of visibility.
+
+```javascript
+import * as Quest from '@questions/elementQuest'
+
+it('should verify element exists', () => {
+  cy.visit('es-es');
+  Quest.ElementExit('[data-testid="jugar-gratis"]');
+});
+```
+
+<Note>
+  `ElementExit` automatically scrolls the element into view using `scrollIntoView({ block: 'center', inline: 'center' })` before validation.
+</Note>
+
+**Supported Selectors:**
+
+<CodeGroup>
+```javascript IDs
+Quest.ElementExit('#mi-boton');
+```
+
+```javascript Classes
+Quest.ElementExit('.btn-primary');
+```
+
+```javascript Data Attributes
+Quest.ElementExit('[data-testid="login"]');
+```
+
+```javascript Complex Selectors
+Quest.ElementExit('form > div input[name="user"]');
+```
+</CodeGroup>
+
+### ElementNotExit
+
+Verify that an element with specific text does not exist in the DOM.
+
+```javascript
+import * as Quest from '@questions/elementQuest'
+import * as HomeUI from '@ui/homeTarget'
+
+it('should verify element does not exist', () => {
+  cy.visit('es-es');
+  Quest.ElementNotExit(HomeUI.NOTICIAS_ELEMENT, 'PATRICIO');
+});
+```
+
+**Real Test Example:**
+
+```javascript
+const HISTORY = 'HISTORIAS';
+
+it('buscar elementos en listas', () => {
+  Quest.ElementNotExit(HomeUI.NOTICIAS_ELEMENT, 'PATRICIO');
+  // Element containing 'PATRICIO' should not exist
+});
+```
+
+## Visibility Validation
+
+### ElementVisible
+
+Verify that an element exists and is visible in the viewport.
+
+```javascript
+import * as Quest from '@questions/elementQuest'
+import * as HomeUI from '@ui/homeTarget'
+
+it('should verify element is visible', () => {
+  cy.visit('es-es');
+  Quest.ElementExit(HomeUI.JUGAR_GRATIS);
+  Quest.ElementVisible(HomeUI.JUGAR_GRATIS);
+});
+```
+
+<Note>
+  It's a best practice to check both existence (`ElementExit`) and visibility (`ElementVisible`) for critical UI elements.
+</Note>
+
+**Output:**
+```
+Thinking: Verificando que el elemento [data-testid="jugar-gratis"] es visible ...
+✓ Element is visible
+📸 TASK: Verificar que el elemento sea visible
+```
+
+### ElementNotVisible
+
+Verify that an element with specific text exists but is not visible.
+
+```javascript
+import * as Quest from '@questions/elementQuest'
+import * as HomeUI from '@ui/homeTarget'
+
+const HISTORY = 'HISTORIAS';
+
+it('should verify element is not visible', () => {
+  cy.visit('es-es');
+  Quest.ElementNotVisible(HomeUI.NOTICIAS_ELEMENT, HISTORY);
+});
+```
+
+**Complete Test Flow:**
+
+```javascript
+const NEWS = 'Noticias';
+const HISTORY = 'HISTORIAS';
+
+it('buscar elementos en listas', () => {
+  // Verify NEWS is visible in the list
+  Quest.VisibleText(HomeUI.NOTICIAS_LIST, NEWS);
+  
+  // Verify HISTORY is not visible initially
+  Quest.ElementNotVisible(HomeUI.NOTICIAS_ELEMENT, HISTORY);
+  
+  // Expand the list
+  Tasks.showList(HomeUI.NOTICIAS_LIST, NEWS);
+  
+  // Now HISTORY should be visible
+  Quest.VisibleText(HomeUI.NOTICIAS_ELEMENT, HISTORY);
+});
+```
+
+## Text Validation
+
+### VisibleText
+
+Verify that an element contains specific text and is visible.
+
+```javascript
+import * as Quest from '@questions/elementQuest'
+import * as HomeUI from '@ui/homeTarget'
+
+it('should verify text is visible', () => {
+  cy.visit('es-es');
+  Quest.VisibleText(HomeUI.ASSASIN_AKALY, 'La Asesina Sigilosa');
+});
+```
+
+**How it works:**
+1. Locates the element using the selector
+2. Finds the first element containing the specified text
+3. Scrolls it into center view
+4. Verifies it's visible
+5. Automatically captures a screenshot
+
+**Output:**
+```
+Thinking: Verificando que el elemento .assasin-akaly contenga el texto {La Asesina Sigilosa} y sea visible...
+✓ Text is visible in element
+📸 TASK: Verificar que el texto sea visible
+```
+
+## Attribute Validation
+
+### CheckImageType
+
+Verify that an element is an image with a specific file type in its `src` attribute.
+
+```javascript
+import * as Quest from '@questions/elementQuest'
+import * as HomeUI from '@ui/homeTarget'
+
+it('should verify image type', () => {
+  cy.visit('es-es');
+  Quest.CheckImageType(HomeUI.IMAGE_POPPY, 'jpg');
+});
+```
+
+**Implementation Details:**
+- Verifies the element is visible
+- Checks that it has an `src` attribute
+- Validates that the `src` includes the specified image type
+
+**Output:**
+```
+Thinking: Verificando que el elemento [data-testid="image-poppy"] sea una imagen de tipo {jpg} y sea visible...
+✓ Element is visible
+✓ Has attribute 'src'
+✓ Includes 'jpg'
+📸 TASK: Verificar que el elemento sea una imagen de tipo
+```
+
+<CodeGroup>
+```javascript JPG Images
+Quest.CheckImageType('[data-testid="hero-image"]', 'jpg');
+```
+
+```javascript PNG Images
+Quest.CheckImageType('.logo-img', 'png');
+```
+
+```javascript WebP Images
+Quest.CheckImageType('#banner', 'webp');
+```
+</CodeGroup>
+
+## Element Counting
+
+### CheckElementNumber
+
+Verify that a specific number of elements exist using Cypress aliases.
+
+```javascript
+import * as Quest from '@questions/elementQuest'
+import * as Tasks from '@tasks/homeTask'
+import * as HomeUI from '@ui/homeTarget'
+
+const FREE_ALIAS = 'gratisElement';
+const NOW_ALIAS = 'ahoraElement';
+
+it('should count elements correctly', () => {
+  cy.visit('es-es');
+  
+  // Count elements containing 'Jugar gratis' and store in alias
+  Tasks.ElementCount(HomeUI.DIVS_ELEMENT, 'Jugar gratis', FREE_ALIAS);
+  
+  // Count elements containing 'Jugar ahora' and store in alias
+  Tasks.ElementCount(HomeUI.DIVS_ELEMENT, 'Jugar ahora', NOW_ALIAS);
+  
+  // Verify counts
+  Quest.CheckElementNumber(NOW_ALIAS, 3);
+  Quest.CheckElementNumber(FREE_ALIAS, 2);
+});
+```
+
+<Note>
+  When using `CheckElementNumber`, pass the alias name **without** the `@` symbol. The function automatically adds it when retrieving the alias.
+</Note>
+
+**Output:**
+```
+Thinking: Verificando que el numero de elementos visibles sea el correcto ...
+✓ Expected 3 to equal 3
+✓ Expected 2 to equal 2
+```
+
+## Complete Test Example
+
+Here's a complete test from the actual codebase demonstrating multiple validation techniques:
+
+```javascript
+import * as HomeUI from '@ui/homeTarget'
+import * as Quest from '@questions/elementQuest' 
+import * as Tasks from '@tasks/homeTask'
+
+const HISTORY = 'HISTORIAS';
+const NEWS = 'Noticias';
+const FREE_ALIAS = 'gratisElement';
+const NOW_ALIAS = 'ahoraElement';
+
+describe('Element Validation Tests', () => {
+  beforeEach(() => {
+    cy.visit('es-es');
+  });
+
+  it('buscar elementos en pag lol', () => {
+    // Check existence and visibility
+    Quest.ElementExit(HomeUI.JUGAR_GRATIS);
+    Quest.ElementVisible(HomeUI.JUGAR_GRATIS);
+    
+    // Validate image type
+    Quest.CheckImageType(HomeUI.IMAGE_POPPY, 'jpg');
+    
+    // Validate text content
+    Quest.VisibleText(HomeUI.ASSASIN_AKALY, 'La Asesina Sigilosa');
+    
+    // Count elements
+    Tasks.ElementCount(HomeUI.DIVS_ELEMENT, 'Jugar gratis', FREE_ALIAS);
+    Tasks.ElementCount(HomeUI.DIVS_ELEMENT, 'Jugar ahora', NOW_ALIAS);
+    Quest.CheckElementNumber(NOW_ALIAS, 3);
+    Quest.CheckElementNumber(FREE_ALIAS, 2);
+  });
+
+  it('buscar elementos en listas', () => {
+    // Validate visible text
+    Quest.VisibleText(HomeUI.NOTICIAS_LIST, NEWS);
+    
+    // Check element is not visible
+    Quest.ElementNotVisible(HomeUI.NOTICIAS_ELEMENT, HISTORY);
+    
+    // Check element does not exist
+    Quest.ElementNotExit(HomeUI.NOTICIAS_ELEMENT, 'PATRICIO');
+    
+    // Perform action to show list
+    Tasks.showList(HomeUI.NOTICIAS_LIST, NEWS);
+    
+    // Verify element is now visible
+    Quest.VisibleText(HomeUI.NOTICIAS_ELEMENT, HISTORY);
+  });
+});
+```
+
+## Best Practices
+
+<Note>
+  **Auto-scrolling:** All validation functions automatically scroll elements into view before assertions, ensuring reliable test execution.
+</Note>
+
+<Note>
+  **Evidence capture:** Functions created with `CreateTask` automatically capture screenshots after validation, providing visual evidence of test execution.
+</Note>
+
+<Note>
+  **First element:** `ElementExit` and `ElementVisible` use `.first()` to select the first matching element, preventing ambiguity with multiple matches.
+</Note>
+
+<Note>
+  **Combine checks:** For critical elements, combine existence and visibility checks for more robust validation.
+</Note>

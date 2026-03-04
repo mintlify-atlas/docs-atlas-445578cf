@@ -1,0 +1,274 @@
+---
+title: 'Custom Commands'
+description: 'Learn how to use the custom Cypress commands: cy.evidence() for screenshots and cy.centerElement() for element positioning'
+---
+
+## Overview
+
+Custom commands extend Cypress's functionality with reusable behaviors. This project includes two powerful commands for test evidence and element positioning.
+
+## cy.evidence()
+
+Captures a screenshot with a custom name and logs it as a task in the Cypress runner.
+
+### Signature
+
+```javascript
+cy.evidence(nameTask: string)
+```
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `nameTask` | string | Descriptive name for the screenshot task |
+
+### Implementation
+
+```javascript commands.js
+Cypress.Commands.add('evidence', (nameTask) => {
+  Cypress.log({
+    name: '📸 TASK',
+    message: nameTask,
+  });
+
+  cy.screenshot(`Task-${nameTask}`, { 
+      capture: 'runner', 
+      overwrite: false 
+  });
+});
+```
+
+### Usage Examples
+
+<CodeGroup>
+
+```javascript Basic Usage
+cy.get('[data-testid="card-category"]')
+  .contains('Actualizaciones del juego')
+  .evidence('Screenshot perfecto y centrado');
+```
+
+```javascript With centerElement
+cy.get('[data-testid="card-category"]')
+  .contains('Actualizaciones del juego')
+  .centerElement()
+  .evidence('Screenshot perfecto y centrado');
+```
+
+```javascript After Assertions
+cy.get('.login-form')
+  .should('be.visible')
+  .evidence('Login form is displayed');
+```
+
+</CodeGroup>
+
+### How It Works
+
+<Steps>
+  <Step title="Logs to Cypress Runner">
+    Creates a custom log entry with a camera emoji (📸) and your task name, making it easy to identify screenshots in the test runner.
+  </Step>
+
+  <Step title="Captures Screenshot">
+    Takes a screenshot of the entire runner (including the test UI and browser viewport) with the filename pattern `Task-{nameTask}`.
+  </Step>
+
+  <Step title="Prevents Overwriting">
+    Sets `overwrite: false` to ensure each screenshot is saved with a unique timestamp, preventing evidence loss.
+  </Step>
+</Steps>
+
+<Note>
+  **Screenshot Location**
+  
+  Screenshots are saved to `evidencia/screenshots/` as configured in `cypress.config.js:18`
+</Note>
+
+## cy.centerElement()
+
+Scrolls the viewport to center a specific element, ensuring perfect screenshot framing.
+
+### Signature
+
+```javascript
+cy.get(selector).centerElement()
+```
+
+### Command Type
+
+**Child Command** - Must be chained from a previous command that yields a DOM element.
+
+### Implementation
+
+```javascript commands.js
+Cypress.Commands.add('centerElement', {
+  prevSubject: true
+}, (subject) => {
+  cy.wrap(subject).then(($el) => {
+    const top = $el.offset().top;
+    const centerPosition = top - (Cypress.config('viewportHeight') / 2);
+    cy.window().scrollTo(0, centerPosition, { duration: 0 });
+    cy.wait(300); 
+  });
+  return cy.wrap(subject);
+});
+```
+
+### Usage Examples
+
+<CodeGroup>
+
+```javascript Center Before Screenshot
+cy.get('[data-testid="card-category"]')
+  .contains('Actualizaciones del juego')
+  .centerElement()
+  .evidence('Screenshot perfecto y centrado');
+```
+
+```javascript Center and Click
+cy.get('.submit-button')
+  .centerElement()
+  .click();
+```
+
+```javascript Chain Multiple Commands
+cy.get('.modal-dialog')
+  .centerElement()
+  .should('be.visible')
+  .find('.close-button')
+  .click();
+```
+
+</CodeGroup>
+
+### How It Works
+
+<Steps>
+  <Step title="Calculate Element Position">
+    Gets the element's offset from the top of the page using jQuery's `.offset().top`.
+  </Step>
+
+  <Step title="Calculate Center Position">
+    Subtracts half the viewport height to determine the scroll position that centers the element:
+    ```javascript
+    const centerPosition = top - (Cypress.config('viewportHeight') / 2);
+    ```
+  </Step>
+
+  <Step title="Scroll Instantly">
+    Scrolls to the calculated position with `duration: 0` for immediate positioning.
+  </Step>
+
+  <Step title="Wait for Stabilization">
+    Waits 300ms to ensure the element is stable before continuing the command chain.
+  </Step>
+
+  <Step title="Return Subject">
+    Returns the original element, allowing further command chaining.
+  </Step>
+</Steps>
+
+### Configuration Context
+
+The viewport is configured in `cypress.config.js:44-45`:
+
+```javascript cypress.config.js
+viewportWidth: 1920,
+viewportHeight: 1080,
+```
+
+## Command Chaining
+
+Both commands support Cypress's chainable syntax:
+
+```javascript
+cy.get('[data-testid="card-category"]')
+  .contains('Actualizaciones del juego')  // Filter by text
+  .centerElement()                         // Center in viewport
+  .evidence('Screenshot perfecto y centrado'); // Capture screenshot
+```
+
+## Best Practices
+
+<Warning>
+  **Use centerElement Before Screenshots**
+  
+  Always call `.centerElement()` before `.evidence()` to ensure the element is properly framed in the screenshot:
+  ```javascript
+  // Good
+  cy.get('.element').centerElement().evidence('Test evidence');
+  
+  // Less optimal
+  cy.get('.element').evidence('Test evidence');
+  ```
+</Warning>
+
+<Note>
+  **Descriptive Evidence Names**
+  
+  Use clear, descriptive names for your evidence screenshots:
+  ```javascript
+  // Good
+  .evidence('Login button visible before click')
+  .evidence('Error message displayed for invalid email')
+  
+  // Avoid
+  .evidence('test1')
+  .evidence('screenshot')
+  ```
+</Note>
+
+### Evidence Organization
+
+1. **Consistent Naming**: Use a naming convention like `[Action]-[Element]-[State]`
+2. **Capture Key Moments**: Take screenshots at critical test points
+3. **Before/After States**: Document state changes with paired screenshots
+
+```javascript
+cy.get('.modal')
+  .centerElement()
+  .evidence('Modal-Before-Submit');
+
+cy.get('.submit-button').click();
+
+cy.get('.success-message')
+  .centerElement()
+  .evidence('Modal-After-Submit-Success');
+```
+
+## Integration with Reporters
+
+Screenshots captured with `cy.evidence()` are automatically embedded in the Mochawesome HTML report:
+
+```javascript cypress.config.js
+reporter: 'cypress-mochawesome-reporter',
+reporterOptions: {
+  reportDir: 'evidencia/reporte', 
+  embeddedScreenshots: true,
+  inlineAssets: true,
+}
+```
+
+## Real-World Example
+
+From `checkElementHome.cy.js:25-35`:
+
+```javascript
+it(`ejemplo nuevo task creada para cy y varibales secreta de ambiente ${secretValue} variable normal de repo ${variableRepo}`, () => {
+    cy.log(`valor secreto: ${secretValue}`);
+    cy.log(`variable repo: ${variableRepo}`);
+    cy.get('[data-testid="card-category"]')
+      .contains('Actualizaciones del juego')
+      .centerElement()
+      .evidence('Screenshot perfecto y centrado');
+});
+```
+
+This example demonstrates:
+- Using environment variables in test names
+- Logging values for debugging
+- Filtering elements by text content
+- Centering the element for optimal framing
+- Capturing evidence with a descriptive name

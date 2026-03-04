@@ -1,0 +1,145 @@
+---
+title: Installation
+description: Step-by-step guide to clone the repository and set up the Cypress E2E automation project
+---
+
+# Installation
+
+This guide will walk you through setting up the Cypress E2E Automation project on your local machine.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed on your system:
+
+<Steps>
+  <Step title="Node.js">
+    You need [Node.js](https://nodejs.org/en/) installed on your machine. The project is compatible with Node.js 14 or higher.
+    
+    Verify your installation:
+    
+    ```bash
+    node --version
+    ```
+    
+    You should see a version number like `v18.x.x` or higher.
+  </Step>
+  
+  <Step title="npm (Node Package Manager)">
+    npm comes bundled with Node.js. Verify it's installed:
+    
+    ```bash
+    npm --version
+    ```
+    
+    You should see a version number like `8.x.x` or higher.
+  </Step>
+  
+  <Step title="Git">
+    Git is required to clone the repository. Verify it's installed:
+    
+    ```bash
+    git --version
+    ```
+  </Step>
+</Steps>
+
+<Note>
+If you don't have Node.js installed, download it from [nodejs.org](https://nodejs.org/). The LTS (Long Term Support) version is recommended.
+</Note>
+
+## Clone the Repository
+
+First, clone the repository to your local machine:
+
+```bash
+git clone <repository-url>
+```
+
+Replace `<repository-url>` with the actual URL of the repository.
+
+## Navigate to Project Directory
+
+Change into the project directory:
+
+```bash
+cd CypressProject
+```
+
+## Install Dependencies
+
+You have two options for installing dependencies:
+
+<CodeGroup>
+```bash npm install
+npm install
+```
+
+```bash npm ci
+npm ci
+```
+</CodeGroup>
+
+<Info>
+**When to use which command?**
+
+- **`npm install`**: Use for local development. It installs dependencies based on `package.json` and updates `package-lock.json` if needed.
+- **`npm ci`**: Use for CI/CD pipelines and when you want a clean install. It installs exact versions from `package-lock.json` and is faster and more reliable for automated environments.
+</Info>
+
+## Installed Dependencies
+
+The installation will include the following key packages:
+
+### Core Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|----------|
+| `cypress` | ^15.9.0 | E2E testing framework |
+| `cypress-mochawesome-reporter` | ^4.0.2 | HTML report generation |
+| `cypress-real-events` | ^1.15.0 | Real browser event simulation |
+
+### Build Tools
+
+| Package | Version | Purpose |
+|---------|---------|----------|
+| `webpack` | ^5.104.1 | Module bundler for aliases |
+| `@cypress/webpack-preprocessor` | ^7.0.2 | Webpack integration for Cypress |
+| `@babel/core` | ^7.28.6 | JavaScript transpiler |
+| `babel-loader` | ^10.0.0 | Babel loader for Webpack |
+
+## Verify Installation
+
+After installation completes, verify that Cypress is installed correctly:
+
+```bash
+npx cypress --version
+```
+
+You should see output similar to:
+
+```
+Cypress package version: 15.9.0
+Cypress binary version: 15.9.0
+```
+
+<Warning>
+If you encounter issues during installation, try deleting `node_modules/` and `package-lock.json`, then run `npm install` again.
+</Warning>
+
+## Project Configuration Files
+
+After installation, you'll have these important configuration files:
+
+- **`cypress.config.js`**: Main Cypress configuration (base URL, timeouts, reporter settings)
+- **`webpack.config.js`**: Webpack aliases configuration (`@ui`, `@tasks`, `@questions`, `@utils`)
+- **`.babelrc`**: Babel transpilation settings
+- **`jsconfig.json`**: IntelliSense configuration for better IDE support
+- **`pipeline-ci.yaml`**: Azure DevOps CI/CD pipeline definition
+
+## Next Steps
+
+Your environment is now ready! Proceed to the [Quickstart Guide](/quickstart) to run your first test.
+
+<Tip>
+For better IDE support, consider installing the Cypress extension for your code editor. For VS Code, search for "Cypress Helper" in the extensions marketplace.
+</Tip>

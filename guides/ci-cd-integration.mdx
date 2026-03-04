@@ -1,0 +1,433 @@
+---
+title: 'CI/CD Integration'
+description: 'Configure Azure DevOps pipelines to run Cypress tests with automatic reporting and evidence collection'
+---
+
+## Overview
+
+This project uses Azure DevOps pipelines to run Cypress E2E tests in a headless Chrome browser and publish HTML reports with embedded screenshots.
+
+## Pipeline Configuration
+
+The complete pipeline is defined in `pipeline-ci.yaml`:
+
+```yaml pipeline-ci.yaml
+trigger:
+- trunk
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '22.x'
+  displayName: '1. Instalar Node.js'
+
+- script: npm ci
+  displayName: '2. Instalar librerías del proyecto'
+
+- script: |
+    npx cypress run --browser chrome --headless
+  displayName: '3. Ejecutar Cypress E2E'
+  continueOnError: true
+
+- task: PublishHtmlReport@1
+  condition: always()
+  inputs:
+    reportDir: '$(System.DefaultWorkingDirectory)/evidencia/reporte/index.html'
+    tabName: 'Reporte Cypress'
+  displayName: '4. Publicar Pestaña HTML'
+```
+
+## Pipeline Breakdown
+
+<Steps>
+  <Step title="Trigger Configuration">
+    The pipeline runs automatically on commits to the `trunk` branch:
+    ```yaml
+    trigger:
+    - trunk
+    ```
+    
+    <Note>
+      Change `trunk` to `main`, `master`, or any other branch name based on your repository setup.
+    </Note>
+  </Step>
+
+  <Step title="Agent Pool Selection">
+    Uses Microsoft-hosted Ubuntu agents:
+    ```yaml
+    pool:
+      vmImage: 'ubuntu-latest'
+    ```
+    
+    This provides a clean Linux environment with pre-installed tools.
+  </Step>
+
+  <Step title="Node.js Installation">
+    Installs Node.js version 22.x:
+    ```yaml
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '22.x'
+      displayName: '1. Instalar Node.js'
+    ```
+    
+    <Warning>
+      Ensure your `package.json` is compatible with Node.js 22.x. Check the engines field:
+      ```json
+      "engines": {
+        "node": ">=22.0.0"
+      }
+      ```
+    </Warning>
+  </Step>
+
+  <Step title="Dependency Installation">
+    Installs project dependencies using `npm ci`:
+    ```yaml
+    - script: npm ci
+      displayName: '2. Instalar librerías del proyecto'
+    ```
+    
+    `npm ci` is preferred over `npm install` for CI environments because it:
+    - Installs exact versions from `package-lock.json`
+    - Removes `node_modules` before installation
+    - Fails if dependencies don't match the lockfile
+  </Step>
+
+  <Step title="Cypress Test Execution">
+    Runs Cypress tests in headless Chrome:
+    ```yaml
+    - script: |
+        npx cypress run --browser chrome --headless
+      displayName: '3. Ejecutar Cypress E2E'
+      continueOnError: true
+    ```
+    
+    <Note>
+      `continueOnError: true` ensures the pipeline continues to the reporting step even if tests fail.
+    </Note>
+  </Step>
+
+  <Step title="HTML Report Publishing">
+    Publishes the Mochawesome HTML report:
+    ```yaml
+    - task: PublishHtmlReport@1
+      condition: always()
+      inputs:
+        reportDir: '$(System.DefaultWorkingDirectory)/evidencia/reporte/index.html'
+        tabName: 'Reporte Cypress'
+      displayName: '4. Publicar Pestaña HTML'
+    ```
+    
+    The `condition: always()` ensures the report is published whether tests pass or fail.
+  </Step>
+</Steps>
+
+## Cypress Configuration for CI
+
+The `cypress.config.js` is optimized for CI/CD execution:
+
+```javascript cypress.config.js
+const { defineConfig } = require("cypress");
+const webpackPreprocessor = require('@cypress/webpack-preprocessor');
+
+module.exports = defineConfig({
+  reporter: 'cypress-mochawesome-reporter',
+  reporterOptions: {
+    reportDir: 'evidencia/reporte', 
+    charts: true,
+    reportPageTitle: 'Reporte de Pruebas',
+    embeddedScreenshots: true,
+    inlineAssets: true,
+  },
+  retries: {
+    runMode: 2, 
+    openMode: 0 
+  },
+  e2e: {
+    screenshotsFolder: 'evidencia/screenshots',
+    setupNodeEvents(on, config) {
+      on('before:browser:launch', (browser = {}, launchOptions) => {
+        if (browser.family === 'chromium' && browser.name !== 'electron') {
+          launchOptions.args.push('--disable-dev-shm-usage');
+          launchOptions.args.push('--disable-gpu');
+        }
+        return launchOptions;
+      });
+      
+      const options = {
+        webpackOptions: require('./webpack.config.js'),
+        watchOptions: {},
+      };
+      on('file:preprocessor', webpackPreprocessor(options));
+      require('cypress-mochawesome-reporter/plugin')(on);
+      
+      config.env.SECRET_VALUE = process.env.CYPRESS_SECRET_VALUE || config.env.SECRET_VALUE;
+      config.env.VARIABLE_REPO = process.env.CYPRESS_VARIABLE_REPO || config.env.VARIABLE_REPO;
+      
+      return config;
+    },
+    baseUrl: 'https://www.leagueoflegends.com/',
+    viewportWidth: 1920,
+    viewportHeight: 1080,
+    defaultCommandTimeout: 18000,
+    chromeWebSecurity: false
+  },
+});
+```
+
+### Key CI Configuration
+
+<CodeGroup>
+
+```javascript Reporter Configuration
+reporter: 'cypress-mochawesome-reporter',
+reporterOptions: {
+  reportDir: 'evidencia/reporte', 
+  charts: true,
+  reportPageTitle: 'Reporte de Pruebas',
+  embeddedScreenshots: true,  // Critical for CI
+  inlineAssets: true,          // Critical for CI
+}
+```
+
+```javascript Retry Strategy
+retries: {
+  runMode: 2,   // Retry failed tests 2 times in CI
+  openMode: 0   // No retries during local development
+}
+```
+
+```javascript Browser Optimization
+on('before:browser:launch', (browser = {}, launchOptions) => {
+  if (browser.family === 'chromium' && browser.name !== 'electron') {
+    launchOptions.args.push('--disable-dev-shm-usage');
+    launchOptions.args.push('--disable-gpu');
+  }
+  return launchOptions;
+});
+```
+
+</CodeGroup>
+
+### CI-Critical Settings
+
+| Setting | Value | Purpose |
+|---------|-------|----------|
+| `embeddedScreenshots` | `true` | Embeds screenshots in HTML report (no external file dependencies) |
+| `inlineAssets` | `true` | Bundles CSS/JS into single HTML file for easy sharing |
+| `runMode` retries | `2` | Automatically retries flaky tests to reduce false failures |
+| `--disable-dev-shm-usage` | Chrome flag | Prevents shared memory issues in Docker/CI environments |
+| `--disable-gpu` | Chrome flag | Disables GPU hardware acceleration for headless mode |
+
+## Environment Variables
+
+The pipeline supports environment variables for sensitive data and configuration:
+
+### Setting Variables in Azure DevOps
+
+<Steps>
+  <Step title="Navigate to Pipeline Variables">
+    Go to your Azure DevOps pipeline → Edit → Variables
+  </Step>
+
+  <Step title="Add Secret Variables">
+    Add variables with the `CYPRESS_` prefix:
+    - `CYPRESS_SECRET_VALUE` (mark as secret)
+    - `CYPRESS_VARIABLE_REPO`
+  </Step>
+
+  <Step title="Access in Tests">
+    Variables are automatically available via `Cypress.env()`:
+    ```javascript
+    const secretValue = Cypress.env('SECRET_VALUE');
+    const variableRepo = Cypress.env('VARIABLE_REPO');
+    
+    it(`test with ${secretValue} and ${variableRepo}`, () => {
+        cy.log(`valor secreto: ${secretValue}`);
+        cy.log(`variable repo: ${variableRepo}`);
+    });
+    ```
+  </Step>
+</Steps>
+
+### Environment Variable Mapping
+
+The `setupNodeEvents` function maps environment variables:
+
+```javascript cypress.config.js
+config.env.SECRET_VALUE = process.env.CYPRESS_SECRET_VALUE || config.env.SECRET_VALUE;
+config.env.VARIABLE_REPO = process.env.CYPRESS_VARIABLE_REPO || config.env.VARIABLE_REPO;
+```
+
+<Note>
+  **Naming Convention**
+  
+  Azure DevOps variables prefixed with `CYPRESS_` are automatically available in `process.env`.
+</Note>
+
+## Report Output
+
+The pipeline generates reports in the `evidencia/` directory:
+
+```
+evidencia/
+├── reporte/
+│   └── index.html          # Main HTML report
+└── screenshots/
+    └── Task-*.png          # Evidence screenshots
+```
+
+### Report Features
+
+- **Charts**: Visual representation of test results
+- **Embedded Screenshots**: All `cy.evidence()` screenshots included inline
+- **Self-Contained**: Single HTML file with no external dependencies
+- **Sharable**: Can be downloaded and viewed offline
+
+## Running Locally vs CI
+
+<CodeGroup>
+
+```bash Local Development
+npx cypress open
+```
+
+```bash Local Headless (CI Simulation)
+npx cypress run --browser chrome --headless
+```
+
+```bash CI Environment
+npx cypress run --browser chrome --headless
+# Runs automatically via pipeline-ci.yaml
+```
+
+</CodeGroup>
+
+### Differences
+
+| Aspect | Local (`open`) | CI (`run`) |
+|--------|----------------|------------|
+| Browser | Interactive | Headless |
+| Retries | 0 | 2 |
+| Reporter | Spec | Mochawesome HTML |
+| Speed | Slower (visual) | Faster (headless) |
+
+## Troubleshooting CI Failures
+
+<Warning>
+  **Shared Memory Issues**
+  
+  If you see errors like "session deleted because of page crash", ensure Chrome flags are set:
+  ```javascript
+  launchOptions.args.push('--disable-dev-shm-usage');
+  launchOptions.args.push('--disable-gpu');
+  ```
+</Warning>
+
+<Warning>
+  **Timeout Issues**
+  
+  CI environments may be slower. Increase timeouts if needed:
+  ```javascript
+  defaultCommandTimeout: 18000,  // 18 seconds
+  ```
+</Warning>
+
+### Common Issues
+
+1. **Tests pass locally but fail in CI**
+   - Check viewport size differences
+   - Verify environment variables are set
+   - Review timing-sensitive tests
+
+2. **Report not published**
+   - Verify `reportDir` path matches Cypress config
+   - Ensure `condition: always()` is set
+   - Check file permissions
+
+3. **Screenshots missing from report**
+   - Confirm `embeddedScreenshots: true`
+   - Verify `inlineAssets: true`
+   - Check screenshot folder path
+
+## Best Practices
+
+<Steps>
+  <Step title="Use npm ci in CI">
+    Always use `npm ci` instead of `npm install` for reproducible builds.
+  </Step>
+
+  <Step title="Enable Retries">
+    Configure retries for flaky tests:
+    ```javascript
+    retries: {
+      runMode: 2,
+      openMode: 0
+    }
+    ```
+  </Step>
+
+  <Step title="Continue on Error">
+    Set `continueOnError: true` to ensure reports are published even when tests fail.
+  </Step>
+
+  <Step title="Use condition: always()">
+    Always publish reports regardless of test results:
+    ```yaml
+    condition: always()
+    ```
+  </Step>
+
+  <Step title="Optimize Browser Launch">
+    Add Chrome flags to prevent CI-specific issues:
+    ```javascript
+    launchOptions.args.push('--disable-dev-shm-usage');
+    launchOptions.args.push('--disable-gpu');
+    ```
+  </Step>
+</Steps>
+
+## Extending the Pipeline
+
+### Adding Parallel Execution
+
+```yaml
+strategy:
+  matrix:
+    spec1:
+      SPEC: 'cypress/e2e/checkElementHome.cy.js'
+    spec2:
+      SPEC: 'cypress/e2e/historyPage.cy.js'
+
+steps:
+- script: |
+    npx cypress run --browser chrome --headless --spec $(SPEC)
+  displayName: 'Run Cypress Tests'
+```
+
+### Adding Slack Notifications
+
+```yaml
+- task: SlackNotification@1
+  condition: always()
+  inputs:
+    SlackApiToken: '$(SLACK_TOKEN)'
+    MessageAuthor: 'Azure DevOps'
+    Channel: '#test-results'
+    Message: 'Cypress tests completed. Results: $(Agent.JobStatus)'
+```
+
+### Archiving Test Artifacts
+
+```yaml
+- task: PublishBuildArtifacts@1
+  condition: always()
+  inputs:
+    PathtoPublish: 'evidencia'
+    ArtifactName: 'cypress-evidence'
+  displayName: 'Archive Test Evidence'
+```

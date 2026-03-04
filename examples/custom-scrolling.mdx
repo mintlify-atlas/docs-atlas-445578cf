@@ -1,0 +1,442 @@
+---
+title: 'Custom Scrolling with cy.centerElement()'
+description: 'Learn how to use the cy.centerElement() custom command for precise element positioning and scrolling'
+---
+
+## Overview
+
+The `cy.centerElement()` command is a custom Cypress command that centers an element in the viewport before interacting with it. This ensures elements are perfectly positioned for screenshots, visibility checks, and user interactions.
+
+Implemented in `cypress/support/commands.js`, it calculates the element's position and scrolls the window to center it vertically.
+
+## Basic Usage
+
+### Center and Capture
+
+The most common use case is centering an element before capturing evidence:
+
+```javascript
+it('should center element and capture screenshot', () => {
+  cy.visit('es-es');
+  cy.get('[data-testid="card-category"]')
+    .contains('Actualizaciones del juego')
+    .centerElement()
+    .evidence('Screenshot perfecto y centrado');
+});
+```
+
+**Result:**
+- Element scrolls to vertical center of viewport
+- 300ms wait ensures smooth scrolling completion
+- Screenshot captures perfectly centered element
+
+<Note>
+  `cy.centerElement()` is a **child command** that requires a subject (previous element). Always chain it after `cy.get()` or another element selection.
+</Note>
+
+## Implementation Details
+
+### Command Definition
+
+Here's the complete implementation from `cypress/support/commands.js`:
+
+```javascript
+Cypress.Commands.add('centerElement', {
+  prevSubject: true
+}, (subject) => {
+  cy.wrap(subject).then(($el) => {
+    const top = $el.offset().top;
+    const centerPosition = top - (Cypress.config('viewportHeight') / 2);
+    cy.window().scrollTo(0, centerPosition, { duration: 0 });
+    cy.wait(300); 
+  });
+  return cy.wrap(subject);
+});
+```
+
+### How It Works
+
+1. **Gets element position:** Uses jQuery's `.offset().top` to get absolute position from document top
+2. **Calculates center position:** Subtracts half of viewport height from element position
+3. **Scrolls window:** Uses `cy.window().scrollTo()` with instant duration (0ms)
+4. **Waits for stability:** Adds 300ms wait to ensure scrolling completes and element is stable
+5. **Returns element:** Wraps and returns the original element for chaining
+
+### Configuration Details
+
+<CodeGroup>
+```javascript prevSubject: true
+// Makes this a child command requiring an element
+cy.get('.element').centerElement() // ✓ Valid
+cy.centerElement() // ✗ Error: subject required
+```
+
+```javascript duration: 0
+// Instant scroll (no animation)
+cy.window().scrollTo(0, centerPosition, { duration: 0 });
+// Feels instant but still needs wait for stability
+```
+
+```javascript cy.wait(300)
+// Ensures element is stable after scroll
+// Prevents flaky tests due to scroll timing
+cy.wait(300);
+```
+</CodeGroup>
+
+## Real Test Examples
+
+### Example 1: Center and Capture from Actual Tests
+
+From `checkElementHome.cy.js`:
+
+```javascript
+const secretValue = Cypress.env('SECRET_VALUE');
+const variableRepo = Cypress.env('VARIABLE_REPO');
+
+it(`ejemplo nuevo task creada para cy y varibales  secreta de ambiente ${secretValue} variable normal de repo ${variableRepo}`, () => {
+  cy.log(`valor secreto: ${secretValue}`);
+  cy.log(`variable repo: ${variableRepo}`);
+  cy.get('[data-testid="card-category"]')
+    .contains('Actualizaciones del juego')
+    .centerElement()
+    .evidence('Screenshot perfecto y centrado');
+});
+```
+
+**Execution flow:**
+1. Visits page and logs environment variables
+2. Finds card with test ID
+3. Filters to element containing specific text
+4. Centers the element in viewport
+5. Captures evidence screenshot
+
+**Output:**
+```
+✓ Log: valor secreto: my-secret
+✓ Log: variable repo: my-repo-var
+✓ Get: [data-testid="card-category"]
+✓ Contains: Actualizaciones del juego
+✓ centerElement
+✓ 📸 TASK: Screenshot perfecto y centrado
+```
+
+### Example 2: Center Before Interaction
+
+```javascript
+it('should center element before clicking', () => {
+  cy.visit('es-es');
+  cy.get('.dropdown-toggle')
+    .centerElement()
+    .click()
+    .evidence('Dropdown opened after centering');
+});
+```
+
+<Note>
+  Centering elements before clicking ensures they're fully in view and reduces flakiness caused by elements being partially off-screen.
+</Note>
+
+### Example 3: Center Multiple Elements
+
+```javascript
+it('should center and validate multiple elements', () => {
+  cy.visit('es-es');
+  
+  // Center first element
+  cy.get('.hero-section')
+    .centerElement()
+    .evidence('Hero section centered');
+  
+  // Scroll and center second element
+  cy.get('.features-section')
+    .centerElement()
+    .evidence('Features section centered');
+  
+  // Center third element
+  cy.get('.footer-section')
+    .centerElement()
+    .evidence('Footer section centered');
+});
+```
+
+### Example 4: Combine with Validation Functions
+
+While validation functions have built-in scrolling, you can still center elements for custom operations:
+
+```javascript
+import * as Quest from '@questions/elementQuest'
+import * as HomeUI from '@ui/homeTarget'
+
+it('should center and validate element', () => {
+  cy.visit('es-es');
+  
+  // Validation functions use scrollIntoView
+  Quest.ElementVisible(HomeUI.JUGAR_GRATIS);
+  
+  // For custom centering before screenshot
+  cy.get(HomeUI.JUGAR_GRATIS)
+    .centerElement()
+    .evidence('Elemento centrado perfectamente');
+});
+```
+
+## Comparison with scrollIntoView
+
+### cy.centerElement() vs scrollIntoView()
+
+<CodeGroup>
+```javascript cy.centerElement()
+// Custom command: Centers element exactly in viewport
+cy.get('.element')
+  .centerElement()
+  .evidence('Perfectly centered');
+
+// Calculation: top - (viewportHeight / 2)
+// Result: Element is at vertical center
+```
+
+```javascript scrollIntoView()
+// Native Cypress: Scrolls element into view
+cy.get('.element')
+  .scrollIntoView({ block: 'center', inline: 'center' })
+  .evidence('Scrolled into view');
+
+// Result: Element visible but may not be perfectly centered
+```
+</CodeGroup>
+
+**Key differences:**
+
+| Feature | cy.centerElement() | scrollIntoView() |
+|---------|-------------------|------------------|
+| **Positioning** | Exact vertical center | Approximate center |
+| **Calculation** | Manual (top - height/2) | Browser native |
+| **Wait time** | Built-in 300ms wait | No built-in wait |
+| **Use case** | Perfect screenshots | General visibility |
+| **Horizontal** | No horizontal scroll | Can center inline |
+
+<Note>
+  Use `cy.centerElement()` when you need **exact centering** for screenshots. Use `scrollIntoView()` for general visibility checks in validation functions.
+</Note>
+
+## Advanced Use Cases
+
+### Center Element in Long Lists
+
+```javascript
+it('should center specific item in long list', () => {
+  cy.visit('es-es');
+  
+  // Find specific item in long scrollable list
+  cy.get('.news-list')
+    .find('.news-item')
+    .contains('Important Update')
+    .centerElement()
+    .evidence('Target item centered in list');
+});
+```
+
+### Center Dynamic Elements
+
+```javascript
+it('should center element after it loads', () => {
+  cy.visit('es-es');
+  
+  // Wait for dynamic content
+  cy.get('.dynamic-content', { timeout: 10000 })
+    .should('be.visible')
+    .centerElement()
+    .evidence('Dynamic content centered after load');
+});
+```
+
+### Center Before Hover Actions
+
+```javascript
+it('should center before hover interaction', () => {
+  cy.visit('es-es');
+  
+  cy.get('.tooltip-trigger')
+    .centerElement()
+    .trigger('mouseover')
+    .evidence('Tooltip displayed on hover');
+  
+  cy.get('.tooltip-content')
+    .should('be.visible')
+    .evidence('Tooltip content visible');
+});
+```
+
+### Center Element in Modal
+
+```javascript
+it('should center element within modal', () => {
+  cy.visit('es-es');
+  
+  // Open modal
+  cy.get('.open-modal-btn').click();
+  
+  // Center element inside modal
+  cy.get('.modal-dialog')
+    .find('.modal-header')
+    .centerElement()
+    .evidence('Modal header centered');
+});
+```
+
+## Best Practices
+
+### When to Use centerElement()
+
+<Note>
+  **Use `cy.centerElement()` when:**
+  - Capturing evidence screenshots
+  - Need precise element positioning
+  - Testing visual elements
+  - Creating visual documentation
+  - Element is partially off-screen
+</Note>
+
+<Note>
+  **Don't use when:**
+  - Using validation functions (they handle scrolling)
+  - Element is already in view
+  - Performance is critical (adds 300ms wait)
+  - Testing horizontal scroll behavior
+</Note>
+
+### Chaining Best Practices
+
+<CodeGroup>
+```javascript Good - Chain for clarity
+cy.get('.element')
+  .centerElement()
+  .should('be.visible')
+  .evidence('Element validated and centered');
+```
+
+```javascript Good - Multiple operations
+cy.get('.button')
+  .centerElement()
+  .click()
+  .should('have.class', 'active')
+  .evidence('Button clicked and active');
+```
+
+```javascript Avoid - Redundant scrolling
+cy.get('.element')
+  .scrollIntoView()
+  .centerElement(); // Don't combine both
+```
+</CodeGroup>
+
+### Performance Considerations
+
+```javascript
+// For multiple elements, center only when needed
+it('should minimize unnecessary centering', () => {
+  // DON'T center everything
+  cy.get('.element1').centerElement().should('exist');
+  cy.get('.element2').centerElement().should('exist');
+  cy.get('.element3').centerElement().should('exist');
+  
+  // DO center only for screenshots
+  cy.get('.element1').should('exist');
+  cy.get('.element2').should('exist');
+  cy.get('.element3').centerElement().evidence('Final state');
+});
+```
+
+<Note>
+  Each `centerElement()` call adds 300ms to test execution. Use it strategically for important visual validations, not for every element.
+</Note>
+
+## Viewport Considerations
+
+### Different Viewport Sizes
+
+The `centerElement()` command adapts to different viewport sizes:
+
+```javascript
+describe('Responsive centering tests', () => {
+  it('should center on mobile viewport', () => {
+    cy.viewport(375, 667); // iPhone size
+    cy.visit('es-es');
+    cy.get('.mobile-menu')
+      .centerElement()
+      .evidence('Centered on mobile viewport');
+  });
+  
+  it('should center on tablet viewport', () => {
+    cy.viewport(768, 1024); // iPad size
+    cy.visit('es-es');
+    cy.get('.tablet-layout')
+      .centerElement()
+      .evidence('Centered on tablet viewport');
+  });
+  
+  it('should center on desktop viewport', () => {
+    cy.viewport(1920, 1080); // Desktop size
+    cy.visit('es-es');
+    cy.get('.desktop-header')
+      .centerElement()
+      .evidence('Centered on desktop viewport');
+  });
+});
+```
+
+**Calculation adjusts automatically:**
+- Mobile (667px height): `centerPosition = top - 333.5`
+- Tablet (1024px height): `centerPosition = top - 512`
+- Desktop (1080px height): `centerPosition = top - 540`
+
+## Troubleshooting
+
+### Element Not Centering
+
+<CodeGroup>
+```javascript Problem: Element at top of page
+// Element already at top, can't scroll up
+cy.get('header').centerElement();
+// Result: May not center if element is too high
+```
+
+```javascript Solution: Check element position
+cy.get('header').then(($el) => {
+  const top = $el.offset().top;
+  cy.log(`Element top position: ${top}`);
+});
+cy.get('header').centerElement();
+```
+</CodeGroup>
+
+### Element Moving After Center
+
+```javascript
+// Problem: Dynamic content shifts element
+cy.get('.lazy-loaded').centerElement().evidence('May be off-center');
+
+// Solution: Wait for stability first
+cy.get('.lazy-loaded')
+  .should('be.visible')
+  .wait(500) // Wait for lazy content to finish loading
+  .centerElement()
+  .evidence('Stable and centered');
+```
+
+### Centering in Fixed Containers
+
+```javascript
+// Problem: Element in fixed/absolute container
+cy.get('.modal .content').centerElement(); // May not work as expected
+
+// Solution: Use scrollIntoView for containers
+cy.get('.modal .content')
+  .scrollIntoView({ block: 'center' })
+  .evidence('Centered in container');
+```
+
+<Note>
+  `cy.centerElement()` scrolls the **window**, not container elements. For elements in scrollable containers, use `scrollIntoView()` instead.
+</Note>

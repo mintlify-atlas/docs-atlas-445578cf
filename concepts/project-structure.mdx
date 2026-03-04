@@ -1,0 +1,170 @@
+---
+title: Project Structure
+description: Understanding the Cypress E2E Automation project directory layout and organization
+---
+
+## Overview
+
+The Cypress E2E Automation project follows a well-organized structure that separates concerns and promotes maintainability. The project uses the Screenplay pattern to organize test code into reusable components.
+
+## Directory Layout
+
+```
+CypressProject/
+│   .babelrc
+│   .gitignore
+│   cypress.config.js            # Main configuration (base URL, timeouts, reporter)
+│   jsconfig.json                # Intellisense configuration
+│   package.json                 # Dependencies and scripts
+│   pipeline-ci.yaml             # CI/CD pipeline definition
+│   webpack.config.js            # Path alias configuration
+│
+├── cypress/
+│   ├── e2e/                     # Test files (*.cy.js)
+│   │       checkElementHome.cy.js
+│   │       historyPage.cy.js
+│   │
+│   ├── fixtures/                # Test data storage
+│   │       example.json
+│   │
+│   └── support/                 # Support code and Screenplay pattern
+│       │   commands.js          # Custom commands (cy.centerElement, cy.evidence)
+│       │   e2e.js               # Global hooks
+│       │
+│       ├── questions/           # Assertions (Validations)
+│       │       elementQuest.js
+│       │
+│       ├── tasks/               # Actions (business logic)
+│       │       historyTask.js
+│       │       homeTask.js
+│       │
+│       ├── ui/                  # UI selectors (page objects)
+│       │       historyTarget.js
+│       │       homeTarget.js
+│       │
+│       └── utils/               # Helpers and wrappers
+│               imageEvidence.js
+│
++---evidencia
+|   +---reporte
+|   |       index.html
+|   |       
+|   \---screenshots
+|       +---checkElementHome.cy.js
+|       \---historyPage.cy.js
+```
+
+## Key Directories
+
+<Accordion title="cypress/e2e/">
+  Contains the actual test files with `.cy.js` extension. These files describe test scenarios and orchestrate Tasks, Questions, and UI selectors.
+
+  **Example test file structure:**
+  ```javascript
+  import * as HomeUI from '@ui/homeTarget'
+  import * as Quest from '@questions/elementQuest' 
+  import * as Tasks from '@tasks/homeTask'
+
+  describe('My first Cypress test', () => {
+    it('search for elements on lol page', () => {
+      Quest.ElementExit(HomeUI.JUGAR_GRATIS);
+      Quest.ElementVisible(HomeUI.JUGAR_GRATIS);
+      Tasks.ElementCount(HomeUI.DIVS_ELEMENT,'Jugar gratis','FREE_ALIAS');
+    });
+  });
+  ```
+</Accordion>
+
+<Accordion title="cypress/fixtures/">
+  Stores test data in JSON or other formats that can be loaded during tests. This allows you to separate test data from test logic.
+
+  **Usage:**
+  ```javascript
+  cy.fixture('example.json').then((data) => {
+    // Use data in your test
+  });
+  ```
+</Accordion>
+
+<Accordion title="cypress/support/">
+  The heart of the Screenplay pattern implementation. This directory contains:
+
+  - **commands.js**: Custom Cypress commands
+  - **e2e.js**: Global hooks and configuration
+  - **questions/**: Validation and assertion logic
+  - **tasks/**: Business logic and user actions
+  - **ui/**: Element selectors organized by page
+  - **utils/**: Helper functions and utilities
+</Accordion>
+
+## Configuration Files
+
+<Accordion title="cypress.config.js">
+  Main Cypress configuration file that defines:
+  - Base URL for tests
+  - Timeouts and retry logic
+  - Reporter configuration
+  - Environment variables
+  - Custom webpack configuration reference
+</Accordion>
+
+<Accordion title="webpack.config.js">
+  Configures webpack aliases for simplified imports. See [Webpack Aliases](/concepts/webpack-aliases) for detailed information.
+</Accordion>
+
+<Accordion title="jsconfig.json">
+  Provides IntelliSense support in IDEs for the webpack aliases, enabling autocomplete and navigation.
+</Accordion>
+
+## Support Directory Organization
+
+The `cypress/support/` directory follows the Screenplay pattern:
+
+### Questions (`cypress/support/questions/`)
+
+Contains validation and assertion logic. Questions answer queries about the application state.
+
+**File:** `elementQuest.js`
+- Element existence checks
+- Visibility validations
+- Text content assertions
+- Image type verification
+
+### Tasks (`cypress/support/tasks/`)
+
+Contains business logic and user actions. Tasks perform operations on the application.
+
+**File:** `homeTask.js`
+- Element counting
+- Clicking actions
+- List display operations
+
+### UI (`cypress/support/ui/`)
+
+Contains element selectors organized by page or component.
+
+**File:** `homeTarget.js`
+- Centralized CSS/XPath selectors
+- Page-specific element locators
+
+### Utils (`cypress/support/utils/`)
+
+Contains helper functions and utilities.
+
+**File:** `imageEvidence.js`
+- Task wrapper for screenshot evidence
+- Common utilities
+
+<Note>
+  The Screenplay pattern separates **what** to test (Questions), **how** to interact (Tasks), and **where** to find elements (UI), making tests more maintainable and readable.
+</Note>
+
+## Reports and Evidence
+
+The `evidencia/` directory stores:
+- HTML reports in `reporte/`
+- Screenshots organized by test file in `screenshots/`
+
+<Tip>
+  Use the custom `cy.evidence()` command to automatically capture screenshots at specific test steps.
+</Tip>

@@ -1,97 +1,209 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+mode: "custom"
 ---
 
-## Setting up
+<div className="relative overflow-hidden dark:bg-[#0B1A2B] bg-gray-50 py-20">
+  <div className="max-w-7xl mx-auto px-6 lg:px-8">
+    <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <div>
+        <h1 className="text-5xl lg:text-6xl font-bold dark:text-white text-gray-900 mb-6">
+          Cypress E2E Automation
+        </h1>
+        <p className="text-xl dark:text-gray-300 text-gray-600 mb-8 max-w-2xl">
+          Build reliable end-to-end tests with screenplay pattern architecture, custom commands, and automated CI/CD integration for modern web applications.
+        </p>
+        <div className="flex flex-wrap gap-4">
+          <a
+            href="/quickstart"
+            className="px-6 py-3 bg-[#c1a25a] text-black font-semibold rounded-sm hover:bg-[#d4b56d] transition-colors no-underline"
+          >
+            Get Started
+          </a>
+          <a
+            href="/introduction"
+            className="px-6 py-3 border border-[#c1a25a] dark:text-[#c1a25a] text-[#09465d] font-semibold rounded-sm hover:bg-[#c1a25a]/10 transition-colors no-underline"
+          >
+            View Documentation
+          </a>
+        </div>
+      </div>
+      <div className="hidden lg:block">
+        <div className="dark:bg-[#1a1d27] bg-white p-6 rounded-sm border dark:border-[#b89e5a] border-gray-300 shadow-lg">
+          <pre className="dark:text-gray-100 text-gray-900 text-sm overflow-x-auto">
+{`// Custom Cypress commands
+cy.get('[data-testid="card"]')
+  .centerElement()
+  .evidence('Screenshot captured');
 
-Get your documentation site up and running in minutes.
+// Screenplay pattern
+import * as Tasks from '@tasks/homeTask';
+import * as Quest from '@questions/elementQuest';
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+Tasks.showList(selector, 'Menu');
+Quest.ElementVisible(selector);`}
+          </pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-## Make it yours
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-bold dark:text-white text-gray-900 mb-4">Quick Start</h2>
+  <p className="text-lg dark:text-gray-400 text-gray-600 mb-8">Get up and running with Cypress E2E Automation in minutes</p>
+  
+  <Steps>
+    <Step title="Install dependencies">
+      Clone the repository and install all required packages.
+      
+      ```bash
+      npm install
+      ```
+      
+      <Note>Use `npm ci` for deterministic builds in CI/CD environments</Note>
+    </Step>
+    
+    <Step title="Configure your tests">
+      Update the base URL in `cypress.config.js` to point to your application.
+      
+      ```javascript
+      module.exports = defineConfig({
+        e2e: {
+          baseUrl: 'https://your-app.com/',
+          viewportWidth: 1920,
+          viewportHeight: 1080
+        }
+      });
+      ```
+    </Step>
+    
+    <Step title="Run your first test">
+      Open Cypress Test Runner or execute tests in headless mode.
+      
+      ```bash
+      npx cypress open
+      ```
+      
+      For headless execution:
+      
+      ```bash
+      npm test
+      ```
+    </Step>
+  </Steps>
+</div>
 
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
-  </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-bold dark:text-white text-gray-900 mb-4">Key Features</h2>
+  <p className="text-lg dark:text-gray-400 text-gray-600 mb-8">Everything you need for scalable test automation</p>
+  
+  <CardGroup cols={2}>
     <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
+      title="Screenplay Pattern"
+      icon="layer-group"
+      href="/concepts/screenplay-pattern"
+    >
+      Organize tests with Tasks, Questions, and UI selectors for maintainable code
+    </Card>
+    <Card
+      title="Custom Commands"
+      icon="wand-magic-sparkles"
+      href="/guides/custom-commands"
+    >
+      Built-in commands like cy.evidence() and cy.centerElement() for enhanced testing
+    </Card>
+    <Card
+      title="Webpack Aliases"
+      icon="link"
+      href="/concepts/webpack-aliases"
+    >
+      Clean imports using @tasks, @ui, @questions, and @utils path aliases
+    </Card>
+    <Card
+      title="CI/CD Integration"
+      icon="arrows-spin"
+      href="/guides/ci-cd-integration"
+    >
+      Azure DevOps pipeline with automated test execution and HTML reporting
+    </Card>
+    <Card
+      title="Smart Scrolling"
+      icon="arrows-up-down"
+      href="/examples/custom-scrolling"
+    >
+      Custom algorithms to center elements and handle non-scrollable content
+    </Card>
+    <Card
+      title="Visual Evidence"
+      icon="camera"
+      href="/examples/screenshot-capture"
+    >
+      Capture screenshots at any test step with custom task logging
+    </Card>
+  </CardGroup>
+</div>
 
-## Create beautiful pages
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-bold dark:text-white text-gray-900 mb-4">Explore Documentation</h2>
+  <p className="text-lg dark:text-gray-400 text-gray-600 mb-8">Dive deeper into core concepts and advanced guides</p>
+  
+  <CardGroup cols={3}>
+    <Card
+      title="Project Structure"
+      icon="folder-tree"
+      href="/concepts/project-structure"
+    >
+      Understanding the organization of test files and support code
+    </Card>
+    <Card
+      title="Writing Tests"
+      icon="file-code"
+      href="/guides/writing-tests"
+    >
+      Best practices for creating reliable and maintainable tests
+    </Card>
+    <Card
+      title="Page Objects"
+      icon="square-terminal"
+      href="/guides/page-objects"
+    >
+      Using UI selectors and the screenplay pattern effectively
+    </Card>
+    <Card
+      title="Configuration"
+      icon="gear"
+      href="/reference/configuration"
+    >
+      Complete reference for cypress.config.js settings
+    </Card>
+    <Card
+      title="Commands API"
+      icon="book"
+      href="/reference/commands"
+    >
+      All custom Cypress commands and their usage
+    </Card>
+    <Card
+      title="Examples"
+      icon="code"
+      href="/examples/element-validation"
+    >
+      Real-world test examples and patterns
+    </Card>
+  </CardGroup>
+</div>
 
-Everything you need to create world-class documentation.
-
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
-
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<div className="mt-20 mb-16 max-w-5xl mx-auto px-6">
+  <div className="dark:bg-[#1a1d27] bg-white p-10 rounded-sm border dark:border-[#b89e5a] border-gray-300">
+    <h2 className="text-3xl font-bold dark:text-white text-gray-900 mb-4">Ready to automate your tests?</h2>
+    <p className="text-lg dark:text-gray-400 text-gray-600 mb-6">
+      Get started with Cypress E2E Automation and build reliable test suites that scale with your application.
+    </p>
+    <a
+      href="/quickstart"
+      className="inline-block px-6 py-3 bg-[#c1a25a] text-black font-semibold rounded-sm hover:bg-[#d4b56d] transition-colors no-underline"
+    >
+      Start Building
+    </a>
+  </div>
+</div>

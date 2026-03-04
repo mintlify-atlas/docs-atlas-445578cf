@@ -1,0 +1,189 @@
+---
+title: Configuration Reference
+description: Complete cypress.config.js configuration options
+---
+
+## Overview
+
+The `cypress.config.js` file contains all configuration options for the Cypress E2E automation framework. This reference documents every option available in the configuration.
+
+## Base Configuration
+
+```javascript
+const { defineConfig } = require("cypress");
+const webpackPreprocessor = require('@cypress/webpack-preprocessor');
+
+module.exports = defineConfig({
+  // Configuration options
+});
+```
+
+## Reporter Options
+
+<Accordion title="cypress-mochawesome-reporter">
+
+The project uses `cypress-mochawesome-reporter` for generating test reports.
+
+<ParamField path="reporter" type="string" default="cypress-mochawesome-reporter">
+  Reporter plugin for generating HTML test reports
+</ParamField>
+
+<ParamField path="reporterOptions.reportDir" type="string" default="evidencia/reporte">
+  Directory where test reports will be saved
+</ParamField>
+
+<ParamField path="reporterOptions.charts" type="boolean" default={true}>
+  Enable charts and graphs in the test report
+</ParamField>
+
+<ParamField path="reporterOptions.reportPageTitle" type="string" default="Reporte de Pruebas">
+  Title displayed on the test report page
+</ParamField>
+
+<ParamField path="reporterOptions.embeddedScreenshots" type="boolean" default={true}>
+  Embed screenshots directly in the HTML report. This is vital for sharing reports as a single file.
+</ParamField>
+
+<ParamField path="reporterOptions.inlineAssets" type="boolean" default={true}>
+  Inline all assets (CSS, JS, images) into a single HTML file for easy sharing
+</ParamField>
+
+</Accordion>
+
+## Retry Configuration
+
+<ParamField path="retries.runMode" type="number" default={2}>
+  Number of times to retry failed tests when running in headless mode (e.g., CI/CD)
+</ParamField>
+
+<ParamField path="retries.openMode" type="number" default={0}>
+  Number of times to retry failed tests when running in interactive mode
+</ParamField>
+
+## E2E Configuration
+
+<Accordion title="e2e Options">
+
+### Basic Settings
+
+<ParamField path="e2e.baseUrl" type="string" default="https://www.leagueoflegends.com/">
+  Base URL for all tests. All `cy.visit()` commands will use this as the base.
+</ParamField>
+
+<ParamField path="e2e.viewportWidth" type="number" default={1920}>
+  Default viewport width in pixels for all tests
+</ParamField>
+
+<ParamField path="e2e.viewportHeight" type="number" default={1080}>
+  Default viewport height in pixels for all tests
+</ParamField>
+
+<ParamField path="e2e.defaultCommandTimeout" type="number" default={18000}>
+  Default timeout in milliseconds for Cypress commands (18 seconds)
+</ParamField>
+
+<ParamField path="e2e.chromeWebSecurity" type="boolean" default={false}>
+  Disable Chrome web security to avoid cross-origin issues. Important for testing across different domains.
+</ParamField>
+
+<ParamField path="e2e.screenshotsFolder" type="string" default="evidencia/screenshots">
+  Directory where screenshots will be saved
+</ParamField>
+
+### Node Events Setup
+
+The `setupNodeEvents` function configures browser launch options, file preprocessors, and environment variables.
+
+#### Browser Launch Configuration
+
+```javascript
+on('before:browser:launch', (browser = {}, launchOptions) => {
+  if (browser.family === 'chromium' && browser.name !== 'electron') {
+    launchOptions.args.push('--disable-dev-shm-usage');
+    launchOptions.args.push('--disable-gpu');
+  }
+  return launchOptions;
+});
+```
+
+**Chrome Launch Arguments:**
+- `--disable-dev-shm-usage`: Prevents shared memory issues in Docker/CI environments
+- `--disable-gpu`: Disables GPU hardware acceleration
+
+#### File Preprocessor
+
+```javascript
+const options = {
+  webpackOptions: require('./webpack.config.js'),
+  watchOptions: {},
+};
+on('file:preprocessor', webpackPreprocessor(options));
+```
+
+Configures Webpack for processing test files, enabling modern JavaScript features and imports.
+
+#### Environment Variables
+
+Environment variables are loaded from system environment and made available to tests:
+
+```javascript
+config.env.SECRET_VALUE = process.env.CYPRESS_SECRET_VALUE || config.env.SECRET_VALUE;
+config.env.VARIABLE_REPO = process.env.CYPRESS_VARIABLE_REPO || config.env.VARIABLE_REPO;
+```
+
+**Available Environment Variables:**
+- `CYPRESS_SECRET_VALUE`: Secret value from environment or config
+- `CYPRESS_VARIABLE_REPO`: Repository variable from environment or config
+
+</Accordion>
+
+## Example Configuration
+
+```javascript
+const { defineConfig } = require("cypress");
+const webpackPreprocessor = require('@cypress/webpack-preprocessor');
+
+module.exports = defineConfig({
+  reporter: 'cypress-mochawesome-reporter',
+  reporterOptions: {
+    reportDir: 'evidencia/reporte', 
+    charts: true,
+    reportPageTitle: 'Reporte de Pruebas',
+    embeddedScreenshots: true,
+    inlineAssets: true,
+  },
+  retries: {
+    runMode: 2, 
+    openMode: 0 
+  },
+  e2e: {
+    screenshotsFolder: 'evidencia/screenshots',
+    setupNodeEvents(on, config) {
+      on('before:browser:launch', (browser = {}, launchOptions) => {
+        if (browser.family === 'chromium' && browser.name !== 'electron') {
+          launchOptions.args.push('--disable-dev-shm-usage');
+          launchOptions.args.push('--disable-gpu');
+        }
+        return launchOptions;
+      });
+      
+      const options = {
+        webpackOptions: require('./webpack.config.js'),
+        watchOptions: {},
+      };
+      on('file:preprocessor', webpackPreprocessor(options));
+      require('cypress-mochawesome-reporter/plugin')(on);
+      
+      config.env.SECRET_VALUE = process.env.CYPRESS_SECRET_VALUE || config.env.SECRET_VALUE;
+      config.env.VARIABLE_REPO = process.env.CYPRESS_VARIABLE_REPO || config.env.VARIABLE_REPO;
+      
+      return config;
+    },
+    baseUrl: 'https://www.leagueoflegends.com/',
+    viewportWidth: 1920,
+    viewportHeight: 1080,
+    defaultCommandTimeout: 18000,
+    chromeWebSecurity: false
+  },
+});
+```

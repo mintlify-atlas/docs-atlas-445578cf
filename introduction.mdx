@@ -1,0 +1,142 @@
+---
+title: Introduction
+description: A comprehensive Cypress E2E automation framework for web testing with advanced features and custom commands
+---
+
+# Cypress E2E Automation Project
+
+This project contains End-to-End tests developed with Cypress for automated web testing. Built with best practices and a structured architecture, it provides a scalable foundation for testing modern web applications.
+
+## What is this Project?
+
+This automation suite is a production-ready Cypress testing framework configured to run tests against the [League of Legends](https://www.leagueoflegends.com/) website. It demonstrates best practices for organizing test files, selectors, and reusable tasks using the Screenplay Pattern.
+
+## Why Use This Framework?
+
+This framework goes beyond basic Cypress setup by providing:
+
+- **Screenplay Pattern Architecture**: Organized structure separating UI selectors, tasks (actions), and questions (assertions)
+- **Custom Cypress Commands**: Extended functionality for better test development
+- **Centralized Reporting**: All test evidence in one place
+- **CI/CD Ready**: Pre-configured Azure DevOps pipeline
+- **Webpack Aliases**: Simplified imports for cleaner code
+
+## Key Features
+
+### Centralized Reporting
+
+HTML reports and screenshots are consolidated in a single `evidencia/` directory, making it easy to share test results with stakeholders.
+
+```javascript
+reporter: 'cypress-mochawesome-reporter',
+reporterOptions: {
+  reportDir: 'evidencia/reporte',
+  charts: true,
+  embeddedScreenshots: true,
+  inlineAssets: true
+}
+```
+
+### Custom Cypress Commands
+
+#### Smart Element Centering
+
+The `cy.centerElement()` command automatically scrolls elements to the center of the viewport before interaction:
+
+```javascript
+cy.get('[data-testid="card-category"]')
+  .contains('Actualizaciones del juego')
+  .centerElement()
+  .evidence('Screenshot perfecto y centrado');
+```
+
+#### Evidence Capture
+
+The `cy.evidence()` command takes screenshots at specific test steps with custom labels:
+
+```javascript
+cy.evidence('Screenshot perfecto y centrado');
+```
+
+### Webpack Path Aliases
+
+Simplified imports using custom aliases make code more maintainable:
+
+```javascript
+import * as HomeUI from '@ui/homeTarget'
+import * as Quest from '@questions/elementQuest'
+import * as Tasks from '@tasks/homeTask'
+```
+
+### Screenplay Pattern Organization
+
+The project follows a clean architecture pattern:
+
+- **UI Layer** (`@ui`): Page object selectors
+- **Tasks Layer** (`@tasks`): Business logic and user actions
+- **Questions Layer** (`@questions`): Assertions and validations
+- **Utils Layer** (`@utils`): Helper functions and wrappers
+
+### CI/CD Pipeline Integration
+
+Includes a ready-to-use `pipeline-ci.yaml` configured for Azure DevOps that:
+
+1. Executes all test cases
+2. Generates HTML reports
+3. Publishes artifacts to the pipeline execution
+
+<Info>
+The framework uses `cypress-mochawesome-reporter` for beautiful HTML reports with embedded screenshots and charts.
+</Info>
+
+## Project Structure
+
+```
+CypressProject/
+│   cypress.config.js            # Main Configuration (BaseURL, Timeouts, Reporter)
+│   package.json                 # Dependencies & Scripts
+│   webpack.config.js            # Path Aliases Configuration
+│   pipeline-ci.yaml             # CI/CD Pipeline Definition
+│
+├── cypress/
+│   ├── e2e/                     # Test files (*.cy.js)
+│   │       checkElementHome.cy.js
+│   │       historyPage.cy.js
+│   │
+│   ├── fixtures/                # Test data (JSON files)
+│   │
+│   └── support/                 # Support Code & Screenplay Pattern
+│       │   commands.js          # Custom Commands (cy.centerElement, cy.evidence)
+│       │   e2e.js               # Global Hooks
+│       │
+│       ├── questions/           # Assertions (Validations)
+│       │       elementQuest.js
+│       │
+│       ├── tasks/               # Actions (Business Logic)
+│       │       historyTask.js
+│       │       homeTask.js
+│       │
+│       ├── ui/                  # UI Selectors (Page Objects)
+│       │       historyTarget.js
+│       │       homeTarget.js
+│       │
+│       └── utils/               # Helpers & Wrappers
+│               imageEvidence.js
+│
+└── evidencia/
+    ├── reporte/
+    │       index.html
+    └── screenshots/
+```
+
+## Technology Stack
+
+- **Cypress**: 15.9.0 - Modern E2E testing framework
+- **Webpack**: 5.104.1 - Module bundler for aliases
+- **Mochawesome Reporter**: 4.0.2 - Beautiful HTML reports
+- **Cypress Real Events**: 1.15.0 - Real browser event simulation
+- **Babel**: 7.28.6 - JavaScript transpilation
+
+<Tip>
+This framework is designed to be easily adaptable to your own project by updating the `baseUrl` in `cypress.config.js` and creating your own page objects and tests.
+</Tip>

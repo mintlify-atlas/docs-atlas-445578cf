@@ -1,0 +1,235 @@
+---
+title: 'Writing Tests'
+description: 'Best practices for writing effective Cypress tests using describe/it blocks and beforeEach hooks'
+---
+
+## Test Structure
+
+Cypress tests follow the Mocha BDD syntax using `describe()` and `it()` blocks to organize test suites and individual test cases.
+
+### Basic Test Pattern
+
+```javascript
+describe('Test Suite Name', () => {
+    beforeEach(() => {
+        // Setup code that runs before each test
+        cy.visit('es-es');
+    });
+
+    it('descriptive test case name', () => {
+        // Test implementation
+    });
+});
+```
+
+## Using beforeEach Hooks
+
+The `beforeEach()` hook runs before every test in the suite, making it ideal for common setup tasks.
+
+<Steps>
+  <Step title="Navigate to Base URL">
+    Use `cy.visit()` to navigate to your application before each test:
+
+    ```javascript
+    beforeEach(() => {
+        cy.visit('es-es');
+    });
+    ```
+  </Step>
+
+  <Step title="Access Environment Variables">
+    Retrieve configuration values inside your describe block:
+
+    ```javascript
+    describe('Mi primera prueba en Cypress', () => {
+        const secretValue = Cypress.env('SECRET_VALUE');
+        const variableRepo = Cypress.env('VARIABLE_REPO');
+        
+        beforeEach(() => {
+            cy.visit('es-es');
+        });
+
+        it(`test with variables ${secretValue} and ${variableRepo}`, () => {
+            cy.log(`valor secreto: ${secretValue}`);
+            cy.log(`variable repo: ${variableRepo}`);
+        });
+    });
+    ```
+  </Step>
+</Steps>
+
+## Real-World Examples
+
+### Example 1: Testing Home Page Elements
+
+```javascript checkElementHome.cy.js
+import * as HomeUI from '@ui/homeTarget'
+import * as Quest from '@questions/elementQuest' 
+import * as Tasks from '@tasks/homeTask'
+
+const HISTORY = 'HISTORIAS';
+const NEWS = 'Noticias';
+const FREE_ALIAS = 'gratisElement';
+const NOW_ALIAS = 'ahoraElement';
+
+describe('Mi primera prueba en Cypress', () => {
+    const secretValue = Cypress.env('SECRET_VALUE');
+    const variableRepo = Cypress.env('VARIABLE_REPO');
+    
+    beforeEach(() => {
+        cy.visit('es-es');
+    });
+
+    it('buscar elementos en pag lol', () => {
+        Quest.ElementExit(HomeUI.JUGAR_GRATIS);
+        Quest.ElementVisible(HomeUI.JUGAR_GRATIS);
+        Quest.CheckImageType(HomeUI.IMAGE_POPPY,'jpg');
+        Quest.VisibleText(HomeUI.ASSASIN_AKALY,'La Asesina Sigilosa');
+        Tasks.ElementCount(HomeUI.DIVS_ELEMENT,'Jugar gratis',FREE_ALIAS);
+        Tasks.ElementCount(HomeUI.DIVS_ELEMENT,'Jugar ahora',NOW_ALIAS);
+        Quest.CheckElementNumber(NOW_ALIAS,3);
+        Quest.CheckElementNumber(FREE_ALIAS,2);
+    });
+
+    it('buscar elementos en listas', () => {
+        Quest.VisibleText(HomeUI.NOTICIAS_LIST,NEWS);
+        Quest.ElementNotVisible(HomeUI.NOTICIAS_ELEMENT,HISTORY);
+        Quest.ElementNotExit(HomeUI.NOTICIAS_ELEMENT,'PATRICIO');
+        Tasks.showList(HomeUI.NOTICIAS_LIST,NEWS);
+        Quest.VisibleText(HomeUI.NOTICIAS_ELEMENT,HISTORY);
+    });
+});
+```
+
+### Example 2: Testing History Page Navigation
+
+```javascript historyPage.cy.js
+import {
+    NOTICIAS_LIST,
+    NOTICIAS_ELEMENT
+} from '@ui/homeTarget'
+
+import {
+    showList,
+    click,
+} from '@tasks/homeTask'
+
+import * as Tasks from '@tasks/historyTask'
+import * as Ui from '@ui/historyTarget'
+import { ElementVisible, CheckImageType } from '@questions/elementQuest'
+
+describe('Busqueda de la Pag History', () => {
+    const ASHE_ALIAS = 'asheElement';
+   
+    beforeEach(() => {
+        cy.visit('es-es');
+    });
+
+    it('entramos en pag principal a busca la opcion de buscar historia', () => {
+        showList(NOTICIAS_LIST,'Noticias');
+        click(NOTICIAS_ELEMENT,'HISTORIAS');
+        Tasks.SearchElement(Ui.LORE_ASHE, Ui.BUTTON('VER MÁS'), ASHE_ALIAS);
+        
+        cy.get(`@${ASHE_ALIAS}`).then(($enlace) => {
+            Tasks.falseClick($enlace);
+            ElementVisible(Ui.ASHE_IMAGE);
+            CheckImageType(Ui.ASHE_IMAGE,'jpg');
+        });
+    });
+});
+```
+
+## Best Practices
+
+<Warning>
+  **Avoid Hard-coded Waits**
+  
+  Instead of `cy.wait(5000)`, use Cypress's built-in retry-ability with assertions:
+  ```javascript
+  // Bad
+  cy.wait(5000);
+  cy.get('.element').click();
+  
+  // Good
+  cy.get('.element').should('be.visible').click();
+  ```
+</Warning>
+
+<Note>
+  **Use Aliases for Dynamic Elements**
+  
+  Store element references using aliases when you need to reuse them:
+  ```javascript
+  Tasks.ElementCount(HomeUI.DIVS_ELEMENT, 'Jugar gratis', FREE_ALIAS);
+  Quest.CheckElementNumber(FREE_ALIAS, 2);
+  ```
+</Note>
+
+### Test Organization Tips
+
+1. **One assertion per test**: Each `it()` block should test one specific behavior
+2. **Descriptive names**: Use clear, action-oriented test names
+3. **Arrange-Act-Assert**: Structure tests with setup, action, and verification phases
+4. **Avoid test interdependence**: Each test should run independently
+
+### Using Constants
+
+Define constants at the top of your test file for better maintainability:
+
+```javascript
+const HISTORY = 'HISTORIAS';
+const NEWS = 'Noticias';
+const FREE_ALIAS = 'gratisElement';
+const NOW_ALIAS = 'ahoraElement';
+```
+
+### Working with Environment Variables
+
+Access environment variables using `Cypress.env()`:
+
+```javascript
+const secretValue = Cypress.env('SECRET_VALUE');
+const variableRepo = Cypress.env('VARIABLE_REPO');
+
+it(`test with ${secretValue} and ${variableRepo}`, () => {
+    cy.log(`valor secreto: ${secretValue}`);
+    cy.log(`variable repo: ${variableRepo}`);
+});
+```
+
+## Test Lifecycle
+
+```javascript
+describe('Test Suite', () => {
+    before(() => {
+        // Runs once before all tests in the suite
+    });
+
+    beforeEach(() => {
+        // Runs before each test
+        cy.visit('es-es');
+    });
+
+    afterEach(() => {
+        // Runs after each test
+    });
+
+    after(() => {
+        // Runs once after all tests in the suite
+    });
+
+    it('test case 1', () => {
+        // Test implementation
+    });
+
+    it('test case 2', () => {
+        // Test implementation
+    });
+});
+```
+
+<Note>
+  **beforeEach vs before**
+  
+  Use `beforeEach()` for navigation and setup that needs a fresh state for each test. Use `before()` only for expensive operations that can be shared across tests.
+</Note>

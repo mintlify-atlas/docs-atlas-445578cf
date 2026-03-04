@@ -1,0 +1,170 @@
+---
+title: Custom Commands
+description: API reference for cy.evidence() and cy.centerElement() custom commands
+---
+
+## Overview
+
+Custom Cypress commands extend the Cypress API with project-specific functionality. This reference documents the custom commands available in the framework.
+
+## cy.evidence()
+
+Captures a screenshot with task metadata for test evidence and reporting.
+
+### Signature
+
+```javascript
+cy.evidence(nameTask)
+```
+
+### Parameters
+
+<ParamField path="nameTask" type="string" required>
+  Name of the task or step being documented. This will be used as the screenshot filename and logged in the Cypress command log.
+</ParamField>
+
+### Implementation
+
+```javascript
+Cypress.Commands.add('evidence', (nameTask) => {
+  Cypress.log({
+    name: '📸 TASK',
+    message: nameTask,
+  });
+
+  cy.screenshot(`Task-${nameTask}`, { 
+    capture: 'runner', 
+    overwrite: false 
+  });
+});
+```
+
+### Behavior
+
+- Logs the task name in the Cypress command log with a camera emoji (📸 TASK)
+- Captures a screenshot of the entire test runner (includes the browser viewport and Cypress UI)
+- Screenshots are saved with the prefix `Task-` followed by the task name
+- Screenshots are never overwritten (`overwrite: false`), allowing multiple captures with the same task name
+- Screenshots are saved to the directory specified in `cypress.config.js` (`screenshotsFolder`)
+
+### Usage Examples
+
+```javascript
+// Basic usage
+cy.evidence('login-page-loaded');
+
+// In a test sequence
+cy.visit('/login');
+cy.evidence('01-navigate-to-login');
+
+cy.get('#username').type('user@example.com');
+cy.get('#password').type('password123');
+cy.evidence('02-credentials-entered');
+
+cy.get('button[type="submit"]').click();
+cy.evidence('03-login-submitted');
+```
+
+### Screenshot Configuration
+
+<ParamField path="capture" type="string" default="runner">
+  Screenshot capture mode. Set to `'runner'` to capture the entire test runner interface.
+</ParamField>
+
+<ParamField path="overwrite" type="boolean" default={false}>
+  Whether to overwrite existing screenshots with the same name. Set to `false` to preserve all screenshots.
+</ParamField>
+
+---
+
+## cy.centerElement()
+
+Scrolls an element to the vertical center of the viewport. This is a child command that operates on a previously yielded element.
+
+### Signature
+
+```javascript
+cy.get(selector).centerElement()
+```
+
+### Parameters
+
+This command requires a previous subject (element) and takes no additional parameters.
+
+<ParamField path="prevSubject" type="element" required>
+  The element to center in the viewport (automatically passed from the previous command in the chain)
+</ParamField>
+
+### Implementation
+
+```javascript
+Cypress.Commands.add('centerElement', {
+  prevSubject: true
+}, (subject) => {
+  cy.wrap(subject).then(($el) => {
+    const top = $el.offset().top;
+    const centerPosition = top - (Cypress.config('viewportHeight') / 2);
+    cy.window().scrollTo(0, centerPosition, { duration: 0 });
+    cy.wait(300); 
+  });
+  return cy.wrap(subject);
+});
+```
+
+### Behavior
+
+- Requires a previous subject (must be chained after a command that yields an element)
+- Calculates the element's vertical position using jQuery's `offset().top`
+- Computes the center position by subtracting half the viewport height from the element's top position
+- Scrolls the window to position the element at the vertical center
+- Scrolling is instantaneous (`duration: 0`)
+- Waits 300ms after scrolling to ensure rendering is complete
+- Returns the original element, allowing further command chaining
+
+### Usage Examples
+
+```javascript
+// Center a specific element
+cy.get('#main-content').centerElement();
+
+// Center and then interact
+cy.get('.important-button')
+  .centerElement()
+  .click();
+
+// Center an element before taking a screenshot
+cy.contains('Submit Form')
+  .centerElement()
+  .should('be.visible');
+cy.evidence('form-submit-button');
+
+// Use with assertions
+cy.get('[data-testid="modal"]')
+  .centerElement()
+  .should('have.class', 'active');
+```
+
+### Technical Details
+
+<ParamField path="scrollTo" type="method">
+  Uses `cy.window().scrollTo(x, y, options)` to perform the scroll operation
+</ParamField>
+
+<ParamField path="duration" type="number" default={0}>
+  Scroll animation duration in milliseconds. Set to `0` for instant scrolling.
+</ParamField>
+
+<ParamField path="wait" type="number" default={300}>
+  Wait time in milliseconds after scrolling to ensure the page has rendered
+</ParamField>
+
+### Return Value
+
+Returns the original element (subject), allowing command chaining:
+
+```javascript
+cy.get('.element')
+  .centerElement()  // Returns the element
+  .click()          // Can chain more commands
+  .should('have.class', 'active');
+```

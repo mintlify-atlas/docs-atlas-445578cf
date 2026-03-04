@@ -1,0 +1,410 @@
+---
+title: UI Selectors
+description: UI selector examples and patterns from the project
+---
+
+## Overview
+
+This reference documents the UI selector patterns used throughout the project. Selectors are organized by page domain (home, history) and follow consistent naming conventions.
+
+## Home Page Selectors
+
+Selectors for elements on the League of Legends home page.
+
+### JUGAR_GRATIS
+
+Selector for the "Play for Free" call-to-action button.
+
+```javascript
+export const JUGAR_GRATIS = 'div[class="top-content"]  a[role="button"]  div[data-testid="cta-content"]';
+```
+
+#### Pattern Breakdown
+
+- `div[class="top-content"]` - Container div with exact class match
+- `a[role="button"]` - Anchor element with button role
+- `div[data-testid="cta-content"]` - Final target div with test ID
+
+#### Usage
+
+```javascript
+import { JUGAR_GRATIS } from '@ui/homeTarget';
+
+cy.get(JUGAR_GRATIS).click();
+cy.get(JUGAR_GRATIS).should('be.visible');
+```
+
+---
+
+### BUTTON_GUARDAR
+
+Selector for the "Save" button inside a dialog.
+
+```javascript
+export const BUTTON_GUARDAR = 'div[role="dialog"] button[class*="type_save"]';
+```
+
+#### Pattern Breakdown
+
+- `div[role="dialog"]` - Parent dialog container
+- `button[class*="type_save"]` - Button with class containing "type_save" (partial match using `*=`)
+
+#### Usage
+
+```javascript
+import { BUTTON_GUARDAR } from '@ui/homeTarget';
+
+cy.get(BUTTON_GUARDAR).click();
+cy.get(BUTTON_GUARDAR).should('be.enabled');
+```
+
+---
+
+### IMAGE_POPPY
+
+Selector for Poppy character image in version 16.6.
+
+```javascript
+export const IMAGE_POPPY = 'a[aria-label^="Versión 16.6"] img[data-testid="mediaImage"]';
+```
+
+#### Pattern Breakdown
+
+- `a[aria-label^="Versión 16.6"]` - Anchor with aria-label starting with "Versión 16.6" (prefix match using `^=`)
+- `img[data-testid="mediaImage"]` - Image with specific test ID
+
+#### Usage
+
+```javascript
+import { IMAGE_POPPY } from '@ui/homeTarget';
+
+cy.get(IMAGE_POPPY).should('be.visible');
+cy.get(IMAGE_POPPY).click();
+```
+
+---
+
+### ASSASIN_AKALY
+
+Selector for Akali assassin character section subtitle.
+
+```javascript
+export const ASSASIN_AKALY = 'section[data-testid="blade"] div[class="icon-tab-media-subtitle"]';
+```
+
+#### Pattern Breakdown
+
+- `section[data-testid="blade"]` - Section element with blade test ID
+- `div[class="icon-tab-media-subtitle"]` - Div with exact class match for subtitle
+
+#### Usage
+
+```javascript
+import { ASSASIN_AKALY } from '@ui/homeTarget';
+
+cy.get(ASSASIN_AKALY).should('contain.text', 'Akali');
+cy.get(ASSASIN_AKALY).scrollIntoView();
+```
+
+---
+
+### DIVS_ELEMENT
+
+Selector for multiple CTA content divs.
+
+```javascript
+export const DIVS_ELEMENT = 'div[class="cta-content"]';
+```
+
+#### Pattern Breakdown
+
+- `div[class="cta-content"]` - Divs with exact class match for CTA content
+- Returns multiple elements (use with `.eq()`, `.first()`, `.last()`, etc.)
+
+#### Usage
+
+```javascript
+import { DIVS_ELEMENT } from '@ui/homeTarget';
+
+cy.get(DIVS_ELEMENT).should('have.length.greaterThan', 0);
+cy.get(DIVS_ELEMENT).first().click();
+cy.get(DIVS_ELEMENT).eq(2).should('be.visible');
+```
+
+---
+
+### NOTICIAS_LIST
+
+Selector for news list paragraph elements.
+
+```javascript
+export const NOTICIAS_LIST = '[data-testid$="internal-news"] > p';
+```
+
+#### Pattern Breakdown
+
+- `[data-testid$="internal-news"]` - Element with test ID ending with "internal-news" (suffix match using `$=`)
+- `> p` - Direct child paragraph elements
+
+#### Usage
+
+```javascript
+import { NOTICIAS_LIST } from '@ui/homeTarget';
+
+cy.get(NOTICIAS_LIST).should('have.length.greaterThan', 0);
+cy.get(NOTICIAS_LIST).each(($p) => {
+  cy.wrap($p).should('be.visible');
+});
+```
+
+---
+
+### NOTICIAS_ELEMENT
+
+Selector for news navigation links.
+
+```javascript
+export const NOTICIAS_ELEMENT = '[data-testid$="internal-news"]  a[data-testid^="riotbar:desktopNav:link-"]';
+```
+
+#### Pattern Breakdown
+
+- `[data-testid$="internal-news"]` - Element with test ID ending with "internal-news"
+- `a[data-testid^="riotbar:desktopNav:link-"]` - Anchor with test ID starting with "riotbar:desktopNav:link-"
+
+#### Usage
+
+```javascript
+import { NOTICIAS_ELEMENT } from '@ui/homeTarget';
+
+cy.get(NOTICIAS_ELEMENT).should('have.length.greaterThan', 0);
+cy.get(NOTICIAS_ELEMENT).first().click();
+```
+
+---
+
+## History Page Selectors
+
+Selectors for elements on the history/lore pages.
+
+### LORE_ASHE
+
+Constant text value for Ashe lore comic.
+
+```javascript
+export const LORE_ASHE = 'Ashe: Comandante #4';
+```
+
+#### Usage
+
+```javascript
+import { LORE_ASHE } from '@ui/historyTarget';
+
+cy.contains(LORE_ASHE).click();
+cy.contains(LORE_ASHE).should('be.visible');
+```
+
+---
+
+### BUTTON
+
+Dynamic button selector function that creates a selector based on button text.
+
+```javascript
+export const BUTTON = (option) => `button:contains('${option}')`;
+```
+
+#### Parameters
+
+- `option` (string) - The text content of the button
+
+#### Returns
+
+A selector string that finds buttons containing the specified text.
+
+#### Usage
+
+```javascript
+import { BUTTON } from '@ui/historyTarget';
+
+cy.get(BUTTON('VER MÁS')).click();
+cy.get(BUTTON('Confirmar')).should('be.visible');
+cy.get(BUTTON('Cancelar')).click();
+```
+
+---
+
+### ASHE_IMAGE
+
+Selector for Ashe Warmother comic image.
+
+```javascript
+export const ASHE_IMAGE = 'img[src*="Fashewarmother-04-00-full.jpg"]';
+```
+
+#### Pattern Breakdown
+
+- `img[src*="Fashewarmother-04-00-full.jpg"]` - Image with src containing the filename (partial match using `*=`)
+
+#### Usage
+
+```javascript
+import { ASHE_IMAGE } from '@ui/historyTarget';
+
+cy.get(ASHE_IMAGE).should('be.visible');
+cy.get(ASHE_IMAGE).should('have.attr', 'src').and('include', 'Fashewarmother');
+```
+
+---
+
+## Selector Patterns
+
+### Attribute Matching
+
+The project uses CSS attribute selectors with various matching operators:
+
+<Accordion title="Exact Match (=)">
+
+```javascript
+// Exact class match
+'div[class="top-content"]'
+
+// Exact role match
+'a[role="button"]'
+```
+
+Matches elements where the attribute value is exactly the specified string.
+
+</Accordion>
+
+<Accordion title="Contains (*=)">
+
+```javascript
+// Class contains "type_save"
+'button[class*="type_save"]'
+
+// Src contains filename
+'img[src*="Fashewarmother-04-00-full.jpg"]'
+```
+
+Matches elements where the attribute value contains the specified substring anywhere.
+
+</Accordion>
+
+<Accordion title="Starts With (^=)">
+
+```javascript
+// Aria-label starts with "Versión 16.6"
+'a[aria-label^="Versión 16.6"]'
+
+// Data-testid starts with prefix
+'a[data-testid^="riotbar:desktopNav:link-"]'
+```
+
+Matches elements where the attribute value starts with the specified string.
+
+</Accordion>
+
+<Accordion title="Ends With ($=)">
+
+```javascript
+// Data-testid ends with "internal-news"
+'[data-testid$="internal-news"]'
+```
+
+Matches elements where the attribute value ends with the specified string.
+
+</Accordion>
+
+### Combinators
+
+<Accordion title="Descendant (space)">
+
+```javascript
+// Any anchor inside top-content div
+'div[class="top-content"] a[role="button"]'
+```
+
+Matches elements that are descendants (at any level) of another element.
+
+</Accordion>
+
+<Accordion title="Direct Child (>)">
+
+```javascript
+// Direct child paragraphs only
+'[data-testid$="internal-news"] > p'
+```
+
+Matches elements that are direct children of another element.
+
+</Accordion>
+
+### Data Attributes
+
+The project heavily uses `data-testid` attributes for reliable element selection:
+
+```javascript
+// Single test ID
+'div[data-testid="cta-content"]'
+
+// Test ID with prefix match
+'a[data-testid^="riotbar:desktopNav:link-"]'
+
+// Test ID with suffix match
+'[data-testid$="internal-news"]'
+```
+
+### Dynamic Selectors
+
+Some selectors are created dynamically using functions:
+
+```javascript
+// Function-based selector
+export const BUTTON = (option) => `button:contains('${option}')`;
+
+// Usage
+const viewMoreButton = BUTTON('VER MÁS');
+const confirmButton = BUTTON('Confirmar');
+```
+
+## Best Practices
+
+### Prefer Data Attributes
+
+Use `data-testid` attributes when available for the most stable selectors:
+
+```javascript
+// Good
+'div[data-testid="cta-content"]'
+
+// Less stable
+'div.cta-content'
+```
+
+### Use Specific Selectors
+
+Combine multiple attributes for specificity:
+
+```javascript
+// Specific
+'div[role="dialog"] button[class*="type_save"]'
+
+// Too broad
+'button'
+```
+
+### Leverage Attribute Matchers
+
+Use appropriate attribute matchers for partial matches:
+
+```javascript
+// Contains
+'img[src*="filename.jpg"]'  // Matches any src with filename.jpg
+
+// Starts with
+'a[aria-label^="Version"]'  // Matches Version 1, Version 2, etc.
+
+// Ends with
+'[data-testid$="-news"]'    // Matches internal-news, external-news, etc.
+```
