@@ -1,0 +1,90 @@
+{
+  "projectType": "general",
+  "projectName": "Cypress E2E Automation",
+  "projectDescription": "End-to-end test automation framework for web applications using Cypress with screenplay pattern architecture",
+  "theme": "aspen",
+  "primaryColor": "#09465d",
+  "lightColor": "#baaa80",
+  "darkColor": "#4d4b4a",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/project-structure",
+              "concepts/screenplay-pattern",
+              "concepts/webpack-aliases"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/writing-tests",
+              "guides/custom-commands",
+              "guides/page-objects",
+              "guides/ci-cd-integration"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/configuration",
+              "reference/commands",
+              "reference/tasks",
+              "reference/selectors"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Examples",
+        "groups": [
+          {
+            "group": "Test Examples",
+            "pages": [
+              "examples/element-validation",
+              "examples/screenshot-capture",
+              "examples/custom-scrolling"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Screenplay pattern architecture for organized test code",
+    "Custom Cypress commands (cy.evidence, cy.centerElement)",
+    "Webpack path aliases for clean imports (@tasks, @ui, @questions, @utils)",
+    "Centralized HTML reporting with Mochawesome",
+    "Smart element scrolling and centering",
+    "Azure DevOps CI/CD pipeline integration",
+    "Environment variable support for secrets management",
+    "Screenshot capture with custom task logging"
+  ],
+  "publicApiSurface": [
+    "cy.evidence(taskName)",
+    "cy.centerElement()",
+    "ElementCount(selector, keyword, alias)",
+    "AliasForWebElement(selector, keyword, alias)",
+    "showList(selector, textElement)",
+    "click(selector, textElement)",
+    "ElementExit(selector)",
+    "ElementVisible(selector)",
+    "CheckImageType(selector, type)",
+    "VisibleText(selector, text)",
+    "CheckElementNumber(alias, expectedCount)",
+    "ElementNotVisible(selector, text)",
+    "ElementNotExit(selector, text)"
+  ]
+}
